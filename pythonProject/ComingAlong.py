@@ -144,7 +144,7 @@ def enemies_present(character):
         if enemy_luck == 0:
             enemy_luck = 1
         if i == 0:
-            enemy_stat_set(enemy_one, enemy_phys, enemy_mag, enemy_defense, 100, enemy_luck)
+            enemy_stat_set(enemy_one, enemy_phys, enemy_mag, enemy_defense, enemy_health, enemy_luck)
             enemy_list.append(enemy_one)
         elif i == 1:
             enemy_stat_set(enemy_two, enemy_phys, enemy_mag, enemy_defense, enemy_health, enemy_luck)
@@ -302,6 +302,12 @@ def player_turn(character, list_enemies):
                         print(skill_choice.name + " dealt a killing blow. ")
                         print(list_enemies[i].name + " has perished")
                         del list_enemies[i]
+
+
+def battle_scenario():
+    enemy_list = enemies_present(player_main)
+    while len(enemy_list) > 0:
+        turn
 
 class MainCharacter:
 
