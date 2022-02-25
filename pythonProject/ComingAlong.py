@@ -179,6 +179,8 @@ def skill_damage(skill, dealer, reciever):
     used_stat = skill_type_check(skill, dealer)
     for i in range(skill.hits):
         hit_check = character_luck_range(dealer)
+        if skill.level == 9:
+            hit_check = 1
         if hit_check == 0:
             total_damage_output = total_damage_output + 0
             if counter < 4:
@@ -243,11 +245,13 @@ def player_turn(character, list_enemies):
         if enemy_choice.health > 0:
             print(character.name + " dealt " + str(enemy_start_health - new_enemy_health) + " damage")
             print(enemy_choice.name + " now has " + str(enemy_choice.health) + " health.")
+            print("")
             time.sleep(3)
             return list_enemies
         else:
             print(character.name + " dealt " + str(enemy_start_health - new_enemy_health) + " damage")
             print(enemy_choice.name + " has perished")
+            print("")
             del list_enemies[enemy_selection - 1]
             time.sleep(3)
             return list_enemies
@@ -273,15 +277,18 @@ def player_turn(character, list_enemies):
                 if new_enemy_health != start_enemy_health:
                     print(skill_choice.name + " hit " + enemy_choice.name )
                     print(enemy_choice.name + " now has " + str(enemy_choice.health) + " health.")
+                    print("")
                     time.sleep(3)
                     return list_enemies
                 else:
                     print(skill_choice.name + " missed.")
+                    print("")
                     time.sleep(3)
                     return list_enemies
             else:
                 print(skill_choice.name + " dealt a killing blow. ")
                 print(enemy_choice.name + " has perished")
+                print("")
                 del list_enemies[enemy_selection-1]
                 time.sleep(3)
                 return list_enemies
@@ -301,10 +308,12 @@ def player_turn(character, list_enemies):
                               + str(start_enemy_health - new_enemy_health) + " damage", end=", ")
                         print(list_enemies[i-(start_list_length - len(list_enemies))].name + " now has " +
                               str(list_enemies[i-(start_list_length - len(list_enemies))].health) + " health.")
+                        print("")
                         time.sleep(3)
                     else:
                         print(skill_choice.name + " missed." +
                               list_enemies[i-(start_list_length - len(list_enemies))].name, end=", ")
+                        print("")
                         time.sleep(3)
                 else:
                     print(skill_choice.name + " dealt a killing blow. ")
@@ -320,7 +329,8 @@ def enemy_turn(enemy, list_characters):
     skill_choice = random.randint(0, len(enemy_skill_list) - 1)
     skill_choice = enemy_skill_list[skill_choice]
     if skill_choice.enemies == 1:
-        character_choice = list_characters[random.randint(0, 3)]
+        character_choice_position = random.randint(0,3)
+        character_choice = list_characters[character_choice_position]
         start_character_health = character_choice.health
         new_enemy_health = start_character_health - round(skill_damage(skill_choice, enemy, character_choice))
         character_choice.health = new_enemy_health
@@ -341,6 +351,7 @@ def enemy_turn(enemy, list_characters):
                 start_character_health - new_enemy_health))
             print(skill_choice.name + " dealt a killing blow. ")
             print(character_choice.name + " has fainted. ")
+            del list_characters[character_choice_position]
             time.sleep(3)
             return list_characters
 
@@ -367,7 +378,7 @@ def enemy_turn(enemy, list_characters):
                     return list_characters
             else:
                 print(skill_choice.name + " dealt a killing blow. ")
-                print(list_characters[i - (start_list_length - len(list_characters))].name + " has perished")
+                print(list_characters[i - (start_list_length - len(list_characters))].name + " has fainted")
                 list_characters[i - (start_list_length - len(list_characters))].health = 0
                 del list_characters[i - (start_list_length - len(list_characters))]
                 time.sleep(3)
@@ -376,11 +387,16 @@ def enemy_turn(enemy, list_characters):
 
 
 def battle_scenario(player_team):
+    clear()
     enemy_list = enemies_present(player_main)
     amount_enemies = len(enemy_list)
+    turn_count = 1
     while len(enemy_list) != 0 or (player_main.health and brawler.health and mage.health and tank.health) != 0:
         turn_choice = random.randint(0,1)
         if turn_choice == 0:
+            if turn_count == 1:
+                print("You are going first! ")
+                time.sleep(3)
             if len(player_team) > 0 and len(enemy_list) > 0:
                 enemy_list = player_turn(player_team[random.randint(0, len(player_team)-1)], enemy_list)
                 if len(enemy_list) == 0:
@@ -389,7 +405,11 @@ def battle_scenario(player_team):
                 player_team = enemy_turn(enemy_list[random.randint(0, len(enemy_list)-1)], player_team)
                 if len(player_team) == 0:
                     break
+            turn_count += 1
         else:
+            if turn_count == 1:
+                print("The enemies are going first! ")
+                time.sleep(3)
             if len(player_team) > 0 and len(enemy_list) > 0:
                 player_team = enemy_turn(enemy_list[random.randint(0, len(enemy_list)-1)], player_team)
                 if len(player_team) == 0:
@@ -398,6 +418,7 @@ def battle_scenario(player_team):
                 enemy_list = player_turn(player_team[random.randint(0, len(player_team)-1)], enemy_list)
                 if len(enemy_list) == 0:
                     break
+            turn_count += 1
     character_gain_exp(player_team, amount_enemies)
 
 
@@ -447,6 +468,34 @@ def level_up_assignment(character):
             points = points - point_reduction
 
 
+def start_town_menu(team_list):
+    while True:
+        clear()
+        print("You are currently in the town of Dhornisas")
+        time.sleep(2)
+        print("1: Go to the shop - WIP")
+        print("2: Rest in the local inn -WIP ")
+        print("3: Rest in the wilderness -WIP ")
+        print("4: Check the local job board -WIP")
+        print("5: Go clear the local wilderness of enemies")
+        print("6: Manage the party -WIP")
+        user_selection = int(input("Choose what you wish to do. "))
+        if user_selection == 1:
+            pass
+        elif user_selection == 2:
+            pass
+        elif user_selection == 3:
+            pass
+        elif user_selection == 4:
+            pass
+        elif user_selection == 5:
+            battle_scenario(team_list)
+        elif user_selection == 6:
+            pass
+        elif user_selection == -1:
+            break
+
+
 class MainCharacter:
 
     def __init__(player, phys_atk, mag_atk, defe, current_health, max_health, luck, name, level, exp, required_exp, skill, position):
@@ -491,6 +540,8 @@ class Skill:
             modifier = 2
         elif skill.level == 3:
             modifier = 3
+        elif skill.level == 9:
+            modifier = 1000000
         skill.modifier = modifier
         skill.name = name
 
@@ -500,12 +551,13 @@ P111 = Skill("phys", 1, 1, 1, "Bonk")
 P084 = Skill("phys", 0, 8, 4, "Hassou Tobi")
 P021 = Skill("phys", 0, 2, 1, "Double Strike")
 M011 = Skill("mag", 0, 1, 1, "Fireball")
+M914 = Skill("mag", 9, 1, 4, "Full Clear")
 
 
-player_main = MainCharacter(5, 5, 5, 20, 20, 5, "Bill", 1, 0, 2, [P011, P111, P021, P084], 1)
-brawler = MainCharacter(8, 3, 5, 25, 25, 1, "Jeff", 1, 0, 2, [P011, P111, P021, P084], 2)
-mage = MainCharacter(3, 8, 3, 20, 20, 6, "Richard", 1, 0, 2, [M011, P084], 3)
-tank = MainCharacter(2, 2, 8, 25, 25, 5, "Bruce", 1, 0, 2, [P011, P111, P021, P084], 4)
+player_main = MainCharacter(5, 5, 5, 20, 20, 5, "Bill", 1, 0, 2, [P011, P111, P021, P084, M914], 1)
+brawler = MainCharacter(8, 3, 5, 25, 25, 1, "Jeff", 1, 0, 2, [P011, P111, P021, P084, M914], 2)
+mage = MainCharacter(3, 8, 3, 20, 20, 6, "Richard", 1, 0, 2, [M011, P084, M914], 3)
+tank = MainCharacter(2, 2, 8, 25, 25, 5, "Bruce", 1, 0, 2, [P011, P111, P021, P084, M914], 4)
 
 
 enemy_one = BasicEnemy(0, 0, 0, 0, 0, "Enemy One", 0, [P011, P111], 1)
@@ -517,15 +569,4 @@ player_list = [player_main, brawler, mage, tank]
 # player_turn(player_main, enemy_list)
 
 
-battle_scenario(player_list)
-for i in range(4):
-    print("Name: " + str(player_list[i].name))
-    print("Physical: " + str(player_list[i].phys))
-    print("Magic: " + str(player_list[i].mag))
-    print("Defense: " + str(player_list[i].defe))
-    print("Health: " + str(player_list[i].health))
-    print("Max Health: " + str(player_list[i].max_health))
-    print("Level: " + str(player_list[i].level))
-    print("Current Experience: " + str(player_list[i].exp))
-    print("Needed Experience: " + str(player_list[i].req_exp))
-    print(" ")
+start_town_menu(player_list)
