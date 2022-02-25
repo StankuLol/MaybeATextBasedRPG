@@ -1,5 +1,6 @@
 import os
 import random
+import time
 SENTINEL = 0
 
 
@@ -116,7 +117,6 @@ def enemies_present(character):
         enemy_level = int(character.level) + random.randint(0,2)
         enemy_points = 25 + enemy_level * 5
         while enemy_points > 0:
-            print("Enemy " + str(i))
             enemy_phys = random.randint(1, enemy_points//2)
             enemy_points -= enemy_phys
             if enemy_points <= 0:
@@ -175,27 +175,27 @@ def specific_enemy_receiving_stats(enemy_number, enemy_list):
     return current_enemy_stats_list
 
 
-def basic_attack(character, enemy):
-    enemy_health = enemy.health
-    player_damage = character.phys
-    enemy_new_health = enemy_health - player_damage
-    return enemy_new_health
+def basic_attack(dealer, reciever):
+    reciever_health = reciever.health
+    dealer_damage = dealer.phys
+    reciever_new_health = reciever_health - dealer_damage
+    return reciever_new_health
 
 
 # The function will say which characters turn it is and prompt them with the possible actions they
 # can take which each then router to separate functions based on the user of the input
-def skill_type_check(skill, character):
+def skill_type_check(skill, user):
     if skill.type == "phys":
-        character_stat = character.phys
+        character_stat = user.phys
     elif skill.type == "mag":
-        character_stat = character.mag
+        character_stat = user.mag
     elif skill.type == "defe":
-        character_stat = character.defe
+        character_stat = user.defe
     return character_stat
 
 
-def character_luck_range(character):
-    chance = 50 + character.luck
+def character_luck_range(user):
+    chance = 50 + user.luck
     target = random.randint(0,100)
     if chance >= target:
         return 1
@@ -203,21 +203,20 @@ def character_luck_range(character):
         return 0
 
 
-def skill_damage(skill, character, enemy):
+def skill_damage(skill, dealer, reciever):
     total_damage_output = 0
-    character_stat = skill_type_check(skill, character)
+    used_stat = skill_type_check(skill, dealer)
     for i in range(skill.hits):
-        hit_check = character_luck_range(character)
+        hit_check = character_luck_range(dealer)
         if hit_check == 0:
-            print("Missed! ")
             total_damage_output = total_damage_output + 0
+            print("Missed!", end=", ")
         elif hit_check == 1:
-            damage_output = (skill.modifier * character_stat)
-            print(damage_output)
+            damage_output = (skill.modifier * used_stat)
+            print(skill.name + " dealt " + str(damage_output) + " damage", end=", ")
             total_damage_output = total_damage_output + damage_output
-            print(enemy.name + " now has " + str(enemy.health - total_damage_output))
 
-    final_damage_output = enemy.health - total_damage_output
+    final_damage_output = total_damage_output
     return final_damage_output
 
 
@@ -237,93 +236,193 @@ def character_skill_learn(skill, character):
 
 def player_turn(character, list_enemies):
     clear()
-    while len(list_enemies) > 0:
-        print("There are " + str(len(list_enemies)) + " enemies present.")
-        print("It is " + character.name + "'s turn.")
-        print("1: Basic Attack")
-        print("2: Skills")
-        action_choice = int(input("Choose which actions to take: "))
+    start_list_length = len(list_enemies)
+    print("There are " + str(len(list_enemies)) + " enemies present.")
+    print("It is " + character.name + "'s turn.")
+    print("1: Basic Attack")
+    print("2: Skills")
+    action_choice = int(input("Choose which actions to take: "))
+    clear()
+    if action_choice == 1:
         clear()
-        if action_choice == 1:
-            clear()
+        for i in range(len(list_enemies)):
+            print(str(i+1) + ": " + list_enemies[i].name + " has " + str(list_enemies[i].health) + " health")
+        enemy_selection = int(input("Which enemy do you wish to attack? "))
+        enemy_choice = list_enemies[enemy_selection - 1]
+        enemy_start_health = enemy_choice.health
+        print(character.name + " attacked " + enemy_choice.name)
+        new_enemy_health = basic_attack(character, enemy_choice)
+        enemy_choice.health = new_enemy_health
+        clear()
+        if enemy_choice.health > 0:
+            print(character.name + " hit the enemy with a basic attack.")
+            print(enemy_choice.name + " now has " + str(enemy_choice.health) + " health.")
+            time.sleep(3)
+            return list_enemies
+        else:
+            print(enemy_choice.name + " has perished")
+            del list_enemies[enemy_selection - 1]
+            time.sleep(3)
+            return list_enemies
+
+    if action_choice == 2:
+        clear()
+        for i in range(len(character.skill)):
+            print(str(i + 1) + ": " + character.skill[i].name)
+        skill_choice = int(input("Which skill do you wish to use? "))
+        clear()
+        skill_choice = character.skill[skill_choice - 1]
+        if skill_choice.enemies == 1:
             for i in range(len(list_enemies)):
                 print(str(i+1) + ": " + list_enemies[i].name + " has " + str(list_enemies[i].health) + " health")
             enemy_selection = int(input("Which enemy do you wish to attack? "))
+            clear()
             enemy_choice = list_enemies[enemy_selection - 1]
-            print(character.name + " attacked " + enemy_choice.name)
-            new_enemy_health = basic_attack(character, enemy_choice)
+            start_enemy_health = enemy_choice.health
+            damage_output = skill_damage(skill_choice, character, enemy_choice)
+            new_enemy_health = start_enemy_health - damage_output
             enemy_choice.health = new_enemy_health
-            clear()
             if enemy_choice.health > 0:
-                print(character.name + " hit the enemy with a basic attack.")
-                print(enemy_choice.name + " now has " + str(enemy_choice.health) + " health.")
+                if new_enemy_health != start_enemy_health:
+                    print(skill_choice.name + " hit " + enemy_choice.name )
+                    print(enemy_choice.name + " now has " + str(enemy_choice.health) + " health.")
+                    time.sleep(3)
+                    return list_enemies
+                else:
+                    print(skill_choice.name + " missed.")
+                    time.sleep(3)
+                    return list_enemies
             else:
+                print(skill_choice.name + " dealt a killing blow. ")
                 print(enemy_choice.name + " has perished")
-                del list_enemies[enemy_selection - 1]
-
-        if action_choice == 2:
-            clear()
-            for i in range(len(character.skill)):
-                print(str(i + 1) + ": " + character.skill[i].name)
-            skill_choice = int(input("Which skill do you wish to use? "))
-            clear()
-            skill_choice = character.skill[skill_choice - 1]
-            if skill_choice.enemies == 0:
-                for i in range(len(list_enemies)):
-                    print(str(i+1) + ": " + list_enemies[i].name + " has " + str(list_enemies[i].health) + " health")
-                enemy_selection = int(input("Which enemy do you wish to attack? "))
-
-                enemy_choice = list_enemies[enemy_selection - 1]
-                start_enemy_health = enemy_choice.health
-                new_enemy_health = skill_damage(skill_choice, character, enemy_choice)
-                enemy_choice.health = new_enemy_health
-                if enemy_choice.health > 0:
+                del list_enemies[enemy_selection-1]
+                time.sleep(3)
+                return list_enemies
+        else:
+            for i in range(len(list_enemies)):
+                start_enemy_health = list_enemies[i-(start_list_length - len(list_enemies))].health
+                new_enemy_health = skill_damage(skill_choice, character, list_enemies[i-(start_list_length - len(list_enemies))])
+                list_enemies[i-(start_list_length - len(list_enemies))].health = new_enemy_health
+                if list_enemies[i-(start_list_length - len(list_enemies))].health > 0:
                     if new_enemy_health != start_enemy_health:
-                        print(skill_choice.name + " hit " + enemy_choice.name )
-                        print(enemy_choice.name + " now has " + str(enemy_choice.health) + " health.")
+                        print(skill_choice.name + " hit " + list_enemies[i-(start_list_length - len(list_enemies))].name + " for "
+                              + str(start_enemy_health - new_enemy_health) + " damage", end=", ")
+                        print(list_enemies[i-(start_list_length - len(list_enemies))].name + " now has " +
+                              str(list_enemies[i-(start_list_length - len(list_enemies))].health) + " health.")
+                        return list_enemies
                     else:
-                        print(skill_choice.name + " missed.")
+                        print(skill_choice.name + " missed." + list_enemies[i-(start_list_length - len(list_enemies))].name, end=", ")
+                        return list_enemies
                 else:
                     print(skill_choice.name + " dealt a killing blow. ")
-                    print(enemy_choice.name + " has perished")
-                    del list_enemies[enemy_selection - 1]
+                    print(list_enemies[i-(start_list_length - len(list_enemies))].name + " has perished")
+                    del list_enemies[i-(start_list_length - len(list_enemies))]
+                    time.sleep(3)
+                    return list_enemies
+    return list_enemies
+
+
+def enemy_turn(enemy, list_characters):
+    start_list_length = len(list_characters)
+    enemy_skill_list = enemy.skill
+    skill_choice = random.randint(0, len(enemy_skill_list) - 1)
+    skill_choice = enemy_skill_list[skill_choice]
+    if skill_choice.enemies == 1:
+        character_choice = list_characters[random.randint(0, 3)]
+        start_character_health = character_choice.health
+        new_enemy_health = start_character_health - round(skill_damage(skill_choice, enemy, character_choice))
+        character_choice.health = new_enemy_health
+        if character_choice.health > 0:
+            if new_enemy_health != start_character_health:
+                print(skill_choice.name + " hit " + character_choice.name + " for " + str(start_character_health - new_enemy_health ))
+                print(character_choice.name + " now has " + str(character_choice.health) + " health.")
+                time.sleep(3)
+                return list_characters
             else:
-                for i in range(len(list_enemies)):
-                    start_enemy_health = list_enemies[i].health
-                    new_enemy_health = skill_damage(skill_choice, character, list_enemies[i])
-                    list_enemies[i].health = new_enemy_health
-                    if list_enemies[i].health > 0:
-                        if new_enemy_health != start_enemy_health:
-                            print(skill_choice.name + " hit " + list_enemies[i].name)
-                            print(list_enemies[i].name + " now has " + str(list_enemies[i].health) + " health.")
-                        else:
-                            print(skill_choice.name + " missed.")
-                    else:
-                        print(skill_choice.name + " dealt a killing blow. ")
-                        print(list_enemies[i].name + " has perished")
-                        del list_enemies[i]
+                print(skill_choice.name + " missed.")
+                time.sleep(3)
+                return list_characters
+        else:
+            print(skill_choice.name + " hit " + character_choice.name + " for " + str(
+                start_character_health - new_enemy_health))
+            print(skill_choice.name + " dealt a killing blow. ")
+            print(character_choice.name + " has fainted. ")
+            time.sleep(3)
+            return list_characters
+
+    else:
+        for i in range(len(list_characters)):
+            start_enemy_health = list_characters[i - (start_list_length - len(list_characters))].health
+            new_enemy_health = start_enemy_health - round(skill_damage(skill_choice, enemy,
+                                            list_characters[i - (start_list_length - len(list_characters))]))
+            list_characters[i - (start_list_length - len(list_characters))].health = new_enemy_health
+            if list_characters[i - (start_list_length - len(list_characters))].health > 0:
+                if new_enemy_health != start_enemy_health:
+                    print(skill_choice.name + " hit " + list_characters[
+                        i - (start_list_length - len(list_characters))].name + " for " + str(
+                        start_enemy_health - new_enemy_health) + " damage", end=", ")
+                    print(list_characters[i - (start_list_length - len(list_characters))].name + " now has " + str(
+                        list_characters[i - (start_list_length - len(list_characters))].health) + " health.")
+                    time.sleep(3)
+                    return list_characters
+                else:
+                    print(
+                        skill_choice.name + " missed." + list_characters[i - (start_list_length - len(list_characters))].name,
+                        end=", ")
+                    time.sleep(3)
+                    return list_characters
+            else:
+                print(skill_choice.name + " dealt a killing blow. ")
+                print(list_characters[i - (start_list_length - len(list_characters))].name + " has perished")
+                list_characters[i - (start_list_length - len(list_characters))].health = 0
+                del list_characters[i - (start_list_length - len(list_characters))]
+                time.sleep(3)
+                return list_characters
+    return list_characters
 
 
-def battle_scenario():
+def battle_scenario(player_team):
     enemy_list = enemies_present(player_main)
-    while len(enemy_list) > 0:
-        turn
+    while len(enemy_list) != 0 or (player_main.health and brawler.health and mage.health and tank.health) != 0:
+        turn_choice = random.randint(0,1)
+        if turn_choice == 0:
+            if len(player_team) > 0 and len(enemy_list) > 0:
+                enemy_list = player_turn(player_team[random.randint(0, len(player_team)-1)], enemy_list)
+                if len(enemy_list) == 0:
+                    break
+            if len(player_team) > 0 and len(enemy_list) > 0:
+                player_team = enemy_turn(enemy_list[random.randint(0, len(enemy_list)-1)], player_team)
+                if len(player_team) == 0:
+                    break
+        else:
+            if len(player_team) > 0 and len(enemy_list) > 0:
+                player_team = enemy_turn(enemy_list[random.randint(0, len(enemy_list)-1)], player_team)
+                if len(player_team) == 0:
+                    break
+            if len(player_team) > 0 and len(enemy_list) > 0:
+                enemy_list = player_turn(player_team[random.randint(0, len(player_team)-1)], enemy_list)
+                if len(enemy_list) == 0:
+                    break
+    print("Hello")
+
 
 class MainCharacter:
 
-    def __init__(player, phys_atk, mag_atk, defe, health, luck, name, level, skill):
+    def __init__(player, phys_atk, mag_atk, defe, current_health, max_health, luck, name, level, skill, position):
         player.phys = phys_atk
         player.mag = mag_atk
         player.defe = defe
-        player.health = health
+        player.health = current_health
+        player.max_health = max_health
         player.luck = luck
         player.name = name
         player.level = level
         player.skill = skill
+        player.position = position
 
 
 class BasicEnemy:
-    def __init__(enemy, phys_atk, mag_atk, defe, health, luck, name, level):
+    def __init__(enemy, phys_atk, mag_atk, defe, health, luck, name, level, skill, position):
         enemy.phys = phys_atk
         enemy.mag = mag_atk
         enemy.defe = defe
@@ -331,14 +430,16 @@ class BasicEnemy:
         enemy.luck = luck
         enemy.name = name
         enemy.level = level
+        enemy.skill = skill
+        enemy.position = position
 
 
 class Skill:
     def __init__(skill, type, level, hits, enemies, name):
         skill.type = type
         skill.level = level
-        skill.enemies = enemies + 1
-        skill.hits = hits + 1
+        skill.enemies = enemies
+        skill.hits = hits
         if skill.level == 0:
             modifier = 1
         elif skill.level == 1:
@@ -351,19 +452,22 @@ class Skill:
         skill.name = name
 
 
-P000 = Skill("phys", 0, 0, 0, "Bash")
-P100 = Skill("phys", 1, 0, 0, "Bonk")
-P073 = Skill("phys", 0, 8, 3, "Hassou Tobi")
-M000 = Skill("mag", 0, 0, 0, "Fireball")
-player_main = MainCharacter(5, 5, 5, 5, 5, "Bill", 1, [P000, P100, P073])
-brawler = MainCharacter(8, 3, 5, 8, 1, "Jeff", 1, [])
-mage = MainCharacter(3, 8, 3, 5, 6, "Richard", 1, [M000])
-tank = MainCharacter(2, 2, 8, 8, 5, "Bruce", 1, [])
-enemy_one = BasicEnemy(0, 0, 0, 0, 0, "Enemy One", 0)
-enemy_two = BasicEnemy(0, 0, 0, 0, 0, "Enemy Two", 0)
-enemy_three = BasicEnemy(0, 0, 0, 0, 0, "Enemy Three", 0)
-enemy_four = BasicEnemy(0, 0, 0, 0, 0, "Enemy Four", 0)
+P011 = Skill("phys", 0, 1, 1, "Bash")
+P111 = Skill("phys", 1, 1, 1, "Bonk")
+P084 = Skill("phys", 0, 8, 4, "Hassou Tobi")
+P021 = Skill("phys", 0, 2, 1, "Double Strike")
+M011 = Skill("mag", 0, 1, 1, "Fireball")
+player_main = MainCharacter(5, 5, 5, 20, 20, 5, "Bill", 1, [P011, P111, P021], 1)
+brawler = MainCharacter(8, 3, 5, 25, 25, 1, "Jeff", 1, [P011, P111, P021], 2)
+mage = MainCharacter(3, 8, 3, 20, 20, 6, "Richard", 1, [M011], 3)
+tank = MainCharacter(2, 2, 8, 25, 25, 5, "Bruce", 1, [P011, P111, P021], 4)
+enemy_one = BasicEnemy(0, 0, 0, 0, 0, "Enemy One", 0, [P011, P111], 1)
+enemy_two = BasicEnemy(0, 0, 0, 0, 0, "Enemy Two", 0, [P011, P111], 2)
+enemy_three = BasicEnemy(0, 0, 0, 0, 0, "Enemy Three", 0, [P011, P111], 3)
+enemy_four = BasicEnemy(0, 0, 0, 0, 0, "Enemy Four", 0, [P011, P111], 4)
+
+player_list = [player_main, brawler, mage, tank]
+# player_turn(player_main, enemy_list)
 
 
-enemy_list = enemies_present(player_main)
-player_turn(player_main, enemy_list)
+battle_scenario(player_list)
