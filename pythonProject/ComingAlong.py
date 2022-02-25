@@ -146,7 +146,7 @@ def basic_attack(dealer, reciever):
     reciever_health = reciever.health
     reciever_defense = random.randint(0, reciever.defe)
     dealer_damage = dealer.phys
-    damage_dealt = reciever_health - dealer_damage + reciever_defense
+    damage_dealt = reciever_health - (dealer_damage + reciever_defense)
     if damage_dealt < 0:
         damage_dealt = 0
     return damage_dealt
@@ -174,13 +174,19 @@ def character_luck_range(user):
 
 
 def skill_damage(skill, dealer, reciever):
+    counter = 0
     total_damage_output = 0
     used_stat = skill_type_check(skill, dealer)
     for i in range(skill.hits):
         hit_check = character_luck_range(dealer)
         if hit_check == 0:
             total_damage_output = total_damage_output + 0
-            print("Missed!", end=", ")
+            if counter < 4:
+                print("Missed!", end=", ")
+                counter += 1
+            else:
+                print("Missed!")
+                counter = 0
         elif hit_check == 1:
             damage_output = round(skill.modifier * used_stat)
             if skill.type == "phys":
@@ -190,8 +196,12 @@ def skill_damage(skill, dealer, reciever):
             total_damage_output = total_damage_output + damage_output - damage_block
             if total_damage_output < 0:
                 total_damage_output = 0
-            print(skill.name + " dealt " + str(total_damage_output) + " damage", end=", ")
-
+            if counter < 4:
+                print(skill.name + " dealt " + str(total_damage_output) + " damage", end=", ")
+                counter += 1
+            else:
+                print(skill.name + " dealt " + str(total_damage_output) + " damage")
+                counter = 0
     final_damage_output = total_damage_output
     return final_damage_output
 
@@ -291,19 +301,16 @@ def player_turn(character, list_enemies):
                               + str(start_enemy_health - new_enemy_health) + " damage", end=", ")
                         print(list_enemies[i-(start_list_length - len(list_enemies))].name + " now has " +
                               str(list_enemies[i-(start_list_length - len(list_enemies))].health) + " health.")
-                        time.sleep(10)
-                        return list_enemies
+                        time.sleep(3)
                     else:
                         print(skill_choice.name + " missed." +
                               list_enemies[i-(start_list_length - len(list_enemies))].name, end=", ")
-                        time.sleep(10)
-                        return list_enemies
+                        time.sleep(3)
                 else:
                     print(skill_choice.name + " dealt a killing blow. ")
                     print(list_enemies[i-(start_list_length - len(list_enemies))].name + " has perished")
                     del list_enemies[i-(start_list_length - len(list_enemies))]
-                    time.sleep(10)
-                    return list_enemies
+                    time.sleep(3)
     return list_enemies
 
 
@@ -399,8 +406,11 @@ def character_gain_exp(character_list, amount_enemies):
         amount_exp_gained = amount_enemies * character_list[i].level
         print(character_list[i].name + " has gained " + str(amount_exp_gained) + " exp.")
         character_list[i].exp += amount_exp_gained
-        if character_list[i].exp >= character_list.req_exp:
+        if character_list[i].exp >= character_list[i].req_exp:
             level_up_assignment(character_list[i])
+            character_list[i].level += 1
+            character_list[i].req_exp = 2 * character_list[i].req_exp
+            character_list[i].health = character_list[i].max_health
 
 
 # The function first prompts which character has leveled up and then asks the user to input
@@ -429,7 +439,7 @@ def level_up_assignment(character):
             points = points - point_reduction
         elif stat == 4:
             point_reduction = stat_prompt("health", points)
-            character.health = character.health + point_reduction
+            character.max_health = character.max_health + point_reduction
             points = points - point_reduction
         elif stat == 5:
             point_reduction = stat_prompt("luck", points)
@@ -508,4 +518,14 @@ player_list = [player_main, brawler, mage, tank]
 
 
 battle_scenario(player_list)
-
+for i in range(4):
+    print("Name: " + str(player_list[i].name))
+    print("Physical: " + str(player_list[i].phys))
+    print("Magic: " + str(player_list[i].mag))
+    print("Defense: " + str(player_list[i].defe))
+    print("Health: " + str(player_list[i].health))
+    print("Max Health: " + str(player_list[i].max_health))
+    print("Level: " + str(player_list[i].level))
+    print("Current Experience: " + str(player_list[i].exp))
+    print("Needed Experience: " + str(player_list[i].req_exp))
+    print(" ")
