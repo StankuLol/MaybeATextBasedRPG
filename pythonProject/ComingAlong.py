@@ -1,7 +1,7 @@
 import os
 import random
 import time
-SENTINEL = 0
+SENTINEL = -1
 
 
 # function clears the console for cleaner use of the program
@@ -9,56 +9,9 @@ def clear():
     os.system('cls')
 
 
-# function ask the user how many stat points they would like to put into the particular stat that
-# they input in the function stat_prompt() and returns the value into the function
-def point_prompt(stat, points):
-    return int(input("You have " + str(points) + " points to allocate, how many would you like to put into " + str(stat) + ("? ")))
-
-
-# the function takes the input found within the function point_prompt and checks to make sure
-# the amount of points attempting to be used is a valid input value and is not more than the
-# user has
-def stat_prompt(stat, points):
-    allocated_points = point_prompt(str(stat), points)
-    while allocated_points > points:
-        clear()
-        print("That is more points then you have")
-        allocated_points = point_prompt(str(stat), points)
-    return allocated_points
-
-
-# The function will display the name of the input character and there stats
-def character_stat_list(character):
-    clear()
-    print(character.name)
-    print("Strength = " + str(character.phys))
-    print("Magic = " + str(character.mag))
-    print("Defense = " + str(character.defe))
-    print("Health = " + str(character.health))
-    print("Luck = " + str(character.luck))
-
-
-# The function prompts the user to put in a number corresponding to a party member to route to the
-# character_list function
-def check_stats():
-    checked_character = 0
-    while checked_character != -1:
-        clear()
-        print("Whose stats would you like to check? ")
-        checked_character = int(input(
-            "1 for " + player_main.name + ", 2 for " + brawler.name + ", 3 for " + mage.name + ", and 4 for " + tank.name + ": "))
-        while checked_character == 1:
-            character_list(player_main)
-            checked_character = input("Type 0 to return to previous screen ")
-        while checked_character == 2:
-            character_list(brawler)
-            checked_character = input("Type 0 to return to previous screen ")
-        while checked_character == 3:
-            character_list(mage)
-            checked_character = input("Type 0 to return to previous screen ")
-        while checked_character == 4:
-            character_list(tank)
-            checked_character = input("Type 0 to return to previous screen ")
+# Start of functions that are in regards to battle scenarios
+# ______________________________________________________________________________________________________________________
+# ______________________________________________________________________________________________________________________
 
 
 def enemy_stat_set(enemy, phys, mag, defe, health, luck):
@@ -419,6 +372,7 @@ def battle_scenario(player_team):
                 if len(enemy_list) == 0:
                     break
             turn_count += 1
+    gold_gain(amount_enemies)
     character_gain_exp(player_team, amount_enemies)
 
 
@@ -426,12 +380,32 @@ def character_gain_exp(character_list, amount_enemies):
     for i in range(len(character_list)):
         amount_exp_gained = amount_enemies * character_list[i].level
         print(character_list[i].name + " has gained " + str(amount_exp_gained) + " exp.")
+        time.sleep(3)
         character_list[i].exp += amount_exp_gained
         if character_list[i].exp >= character_list[i].req_exp:
             level_up_assignment(character_list[i])
             character_list[i].level += 1
             character_list[i].req_exp = 2 * character_list[i].req_exp
+            character_list[i].max_health += (10+random.randint(0,10))
             character_list[i].health = character_list[i].max_health
+
+
+def gold_gain(amount_enemies):
+    clear()
+    initial_gold = item_pack.gold
+    for i in range(amount_enemies):
+        gold_amount = player_main.level * random.uniform(1.0, 10.0)
+        item_pack.gold += round(gold_amount)
+    print("You gained " + str(item_pack.gold - initial_gold) + " gold. ")
+    time.sleep(3)
+# ______________________________________________________________________________________________________________________
+# ______________________________________________________________________________________________________________________
+# End of combat scenario functions
+
+
+# Start of character level-up and stat checking functions
+# ______________________________________________________________________________________________________________________
+# ______________________________________________________________________________________________________________________
 
 
 # The function first prompts which character has leveled up and then asks the user to input
@@ -444,14 +418,14 @@ def level_up_assignment(character):
     while points > 0:
         clear()
         print(character.name + " has leveled up!")
-        print("1 = Strength, 2 = Insight, 3 = Defense, 4 = Health, 5 = Luck")
+        print("1 = Strength, 2 = Magic, 3 = Defense, 5 = Luck")
         stat = int(input("Which stat would you like to level? "))
         if stat == 1:
             point_reduction = stat_prompt("strength", points)
             character.phys = character.phys + point_reduction
             points = points - point_reduction
         elif stat == 2:
-            point_reduction = stat_prompt("insight", points)
+            point_reduction = stat_prompt("magic", points)
             character.mag = character.mag + point_reduction
             points = points - point_reduction
         elif stat == 3:
@@ -459,13 +433,107 @@ def level_up_assignment(character):
             character.defe = character.defe + point_reduction
             points = points - point_reduction
         elif stat == 4:
-            point_reduction = stat_prompt("health", points)
-            character.max_health = character.max_health + point_reduction
-            points = points - point_reduction
-        elif stat == 5:
             point_reduction = stat_prompt("luck", points)
             character.luck = character.luck + point_reduction
             points = points - point_reduction
+
+
+# function ask the user how many stat points they would like to put into the particular stat that
+# they input in the function stat_prompt() and returns the value into the function
+def point_prompt(stat, points):
+    return int(input("You have " + str(points) + " points to allocate, how many would you like to put into " + str(stat) + ("? ")))
+
+
+# the function takes the input found within the function point_prompt and checks to make sure
+# the amount of points attempting to be used is a valid input value and is not more than the
+# user has
+def stat_prompt(stat, points):
+    allocated_points = point_prompt(str(stat), points)
+    while allocated_points > points:
+        clear()
+        print("That is more points then you have")
+        allocated_points = point_prompt(str(stat), points)
+    return allocated_points
+
+
+# The function will display the name of the input character and there stats
+def character_stat_list(character):
+    clear()
+    print(character.name)
+    print("Health = " + str(character.health) + "/" + str(character.max_health))
+    print("Strength = " + str(character.phys))
+    print("Magic = " + str(character.mag))
+    print("Defense = " + str(character.defe))
+    print("Luck = " + str(character.luck))
+
+
+# The function prompts the user to put in a number corresponding to a party member to route to the
+# character_list function
+def check_stats():
+    checked_character = 0
+    while checked_character != SENTINEL:
+        clear()
+        print("Whose stats would you like to check? ")
+        checked_character = int(input("1 for " + player_main.name + ", 2 for " + brawler.name +
+                                      ", 3 for " + mage.name + ", and 4 for " + tank.name + ", -1 to return : "))
+        while checked_character == 1:
+            character_stat_list(player_main)
+            checked_character = input("Type 0 to return to previous screen ")
+        while checked_character == 2:
+            character_stat_list(brawler)
+            checked_character = input("Type 0 to return to previous screen ")
+        while checked_character == 3:
+            character_stat_list(mage)
+            checked_character = input("Type 0 to return to previous screen ")
+        while checked_character == 4:
+            character_stat_list(tank)
+            checked_character = input("Type 0 to return to previous screen ")
+
+
+def weapon_list(list_choice):
+    while True:
+        for i in range (len(list_choice)):
+            print(list_choice[i].name + ": Attack = " + str(list_choice[i].add_dam))
+            print("         " + list_choice[i].stat_mod + " : " + str(list_choice[i].stat_mod_num))
+        user_selection = int(input("Enter -1 to return"))
+        if user_selection == -1:
+            break
+
+
+def check_inventory():
+    while True:
+        clear()
+        print("You currently have " + str(item_pack.gold) + "gold")
+        print("1: Weapons List ")
+        print("2: Accessory List ")
+        user_selection = int(input("Chose a list to view, -1 to return: "))
+        if user_selection == 1:
+            weapon_list(item_pack.weapons)
+        elif user_selection == 2:
+            pass
+        elif user_selection == -1:
+            break
+
+
+def party_inventory_menu():
+    while True:
+        clear()
+        print("1: View the current party ")
+        print("2: Edit the party -WIP")
+        print("3: View your current inventory ")
+        action_selection = int(input("What would you like to do, -1 to return: "))
+        if action_selection == 1:
+            check_stats()
+        elif action_selection == 2:
+            pass
+        elif action_selection == 3:
+            check_inventory()
+        elif action_selection == -1:
+            break
+
+# ______________________________________________________________________________________________________________________
+# ______________________________________________________________________________________________________________________
+# End of character level-up and stat check functions
 
 
 def start_town_menu(team_list):
@@ -478,7 +546,7 @@ def start_town_menu(team_list):
         print("3: Rest in the wilderness -WIP ")
         print("4: Check the local job board -WIP")
         print("5: Go clear the local wilderness of enemies")
-        print("6: Manage the party -WIP")
+        print("6: Manage the party and inventory ")
         user_selection = int(input("Choose what you wish to do. "))
         if user_selection == 1:
             pass
@@ -491,14 +559,15 @@ def start_town_menu(team_list):
         elif user_selection == 5:
             battle_scenario(team_list)
         elif user_selection == 6:
-            pass
+            party_inventory_menu()
         elif user_selection == -1:
             break
 
 
 class MainCharacter:
 
-    def __init__(player, phys_atk, mag_atk, defe, current_health, max_health, luck, name, level, exp, required_exp, skill, position):
+    def __init__(player, phys_atk, mag_atk, defe, current_health, max_health,
+                 luck, name, level, exp, required_exp, skill, position):
         player.phys = phys_atk
         player.mag = mag_atk
         player.defe = defe
@@ -546,12 +615,73 @@ class Skill:
         skill.name = name
 
 
+class Item:
+    def __init__(self, gold, weapon_list, accessory_list):
+        self.gold = gold
+        self.weapons = weapon_list
+        self.accessories = accessory_list
+
+
+class Weapons:
+
+    def __init__(self, additional_damage, stat_modifier, stat_modifier_number, name):
+        self.add_dam = additional_damage
+        self.stat_mod = stat_modifier
+        self.stat_mod_num = stat_modifier_number
+        self.name = name
+
+
+class Accessory:
+    def __init__(self, bonus_effect_one, bonus_effect_one_value, bonus_effect_two, bonus_effect_two_value, name):
+        self.b_e_o = bonus_effect_one
+        self.b_e_o_v = bonus_effect_one_value
+        self.b_e_t = bonus_effect_two
+        self.b_e_t_v = bonus_effect_two_value
+        self.name = name
+
+
+def random_stat_generator():
+    value = random.randint(1, 4)
+    if value == 1:
+        return "phys"
+    elif value == 2:
+        return "mag"
+    elif value == 3:
+        return "def"
+    elif value == 4:
+        return "luck"
+
+
+def weapon_generator():
+    for i in range(5):
+        stat = random_stat_generator()
+        new_weapon = Weapons(random.randint(1, 10), stat, random.randint(1, 10), "Test Input")
+        item_pack.weapons.append(new_weapon)
+
+
+def accessory_generator():
+    stat = random_stat_generator()
+    coin_flip = random.randint(0,1)
+    if coin_flip == 0:
+        stat_two = random_stat_generator()
+        stat_two_value = random.randint(0,10)
+    else:
+        stat_two = "null"
+        stat_two_value = 0
+    for i in range(5):
+        new_accessory = Accessory(stat, random.randint(1,10), stat_two, stat_two_value, "Test input")
+    item_pack.weapons.append(new_accessory)
+
+
 P011 = Skill("phys", 0, 1, 1, "Bash")
 P111 = Skill("phys", 1, 1, 1, "Bonk")
 P084 = Skill("phys", 0, 8, 4, "Hassou Tobi")
 P021 = Skill("phys", 0, 2, 1, "Double Strike")
 M011 = Skill("mag", 0, 1, 1, "Fireball")
 M914 = Skill("mag", 9, 1, 4, "Full Clear")
+
+
+item_pack = Item(0, [], [])
 
 
 player_main = MainCharacter(5, 5, 5, 20, 20, 5, "Bill", 1, 0, 2, [P011, P111, P021, P084, M914], 1)
@@ -568,5 +698,5 @@ enemy_four = BasicEnemy(0, 0, 0, 0, 0, "Enemy Four", 0, [P011, P111], 4)
 player_list = [player_main, brawler, mage, tank]
 # player_turn(player_main, enemy_list)
 
-
+weapon_generator()
 start_town_menu(player_list)
