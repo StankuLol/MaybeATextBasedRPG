@@ -1,6 +1,7 @@
 import os
 import random
 import time
+global active_team
 SENTINEL = -1
 
 
@@ -10,7 +11,7 @@ def clear(amount):
     time.sleep(amount)
 
 
-# Start of functions that are in regards to battle scenarios
+# Start of functions that are in regard to battle scenarios
 # ______________________________________________________________________________________________________________________
 # ______________________________________________________________________________________________________________________
 
@@ -35,7 +36,7 @@ def enemies_present(character):
         enemy_defense = 0
         enemy_health = 0
         enemy_luck = 0
-        enemy_level = int(character.level) + random.randint(0,2)
+        enemy_level = int(character.level) + random.randint(0, 2)
         enemy_points = 25 + enemy_level * 5
         while enemy_points > 0:
             enemy_phys = random.randint(1, enemy_points//2)
@@ -96,11 +97,11 @@ def specific_enemy_receiving_stats(enemy_number, enemy_list):
     return current_enemy_stats_list
 
 
-def basic_attack(dealer, reciever):
-    reciever_health = reciever.health
-    reciever_defense = random.randint(0, reciever.defe)
-    dealer_damage = dealer.phys
-    damage_dealt = reciever_health - (dealer_damage + reciever_defense)
+def basic_attack(dealer, receiver):
+    receiver_health = receiver.health
+    receiver_defense = random.randint(0, receiver.temp_defe)
+    dealer_damage = dealer.temp_phys
+    damage_dealt = receiver_health - (dealer_damage + receiver_defense)
     if damage_dealt < 0:
         damage_dealt = 0
     return damage_dealt
@@ -110,24 +111,24 @@ def basic_attack(dealer, reciever):
 # can take which each then router to separate functions based on the user of the input
 def skill_type_check(skill, user):
     if skill.type == "phys":
-        character_stat = user.phys
+        character_stat = user.temp_phys
     elif skill.type == "mag":
-        character_stat = user.mag
+        character_stat = user.temp_mag
     elif skill.type == "defe":
-        character_stat = user.defe
+        character_stat = user.temp_defe
     return character_stat
 
 
 def character_luck_range(user):
-    chance = 50 + user.luck
-    target = random.randint(0,100)
+    chance = 50 + user.temp_luck
+    target = random.randint(0, 100)
     if chance >= target:
         return 1
     else:
         return 0
 
 
-def skill_damage(skill, dealer, reciever):
+def skill_damage(skill, dealer, receiver):
     counter = 0
     total_damage_output = 0
     used_stat = skill_type_check(skill, dealer)
@@ -146,7 +147,7 @@ def skill_damage(skill, dealer, reciever):
         elif hit_check == 1:
             damage_output = round(skill.modifier * used_stat)
             if skill.type == "phys":
-                damage_block = random.randint(0, reciever.defe)
+                damage_block = random.randint(0, receiver.temp_defe)
             elif skill.type == "mag":
                 damage_block = 0
             total_damage_output = total_damage_output + damage_output - damage_block
@@ -165,10 +166,10 @@ def skill_damage(skill, dealer, reciever):
 def show_enemy_stats(enemy_list):
     for i in range(len(enemy_list)):
         print(enemy_list[i].name + "'s health is: " + str(enemy_list[i].health))
-        print(enemy_list[i].name + "'s physical attack is: " + str(enemy_list[i].phys))
-        print(enemy_list[i].name + "'s magical attack is: " + str(enemy_list[i].mag))
-        print(enemy_list[i].name + "'s defense is: " + str(enemy_list[i].defe))
-        print(enemy_list[i].name + "'s luck is: " + str(enemy_list[i].luck))
+        print(enemy_list[i].name + "'s physical attack is: " + str(enemy_list[i].temp_phys))
+        print(enemy_list[i].name + "'s magical attack is: " + str(enemy_list[i].temp_mag))
+        print(enemy_list[i].name + "'s defense is: " + str(enemy_list[i].temp_defe))
+        print(enemy_list[i].name + "'s luck is: " + str(enemy_list[i].temp_luck))
 
 
 def character_skill_learn(skill, character):
@@ -176,7 +177,7 @@ def character_skill_learn(skill, character):
     character.skill.append(skill)
 
 
-def player_turn(character, list_enemies):
+def player_turn(character, list_enemies, list_players):
     clear(1)
     start_list_length = len(list_enemies)
     print("There are " + str(len(list_enemies)) + " enemies present.")
@@ -211,88 +212,177 @@ def player_turn(character, list_enemies):
             return list_enemies
 
     if action_choice == 2:
+        buff_amount = 0
         clear(1)
         for i in range(len(character.skill)):
             print(str(i + 1) + ": " + character.skill[i].name)
         skill_choice = int(input("Which skill do you wish to use? "))
         clear(1)
         skill_choice = character.skill[skill_choice - 1]
-        if skill_choice.enemies == 1:
-            for i in range(len(list_enemies)):
-                print(str(i+1) + ": " + list_enemies[i].name + " has " + str(list_enemies[i].health) + " health")
-            enemy_selection = int(input("Which enemy do you wish to attack? "))
-            clear(1)
-            enemy_choice = list_enemies[enemy_selection - 1]
-            start_enemy_health = enemy_choice.health
-            damage_output = skill_damage(skill_choice, character, enemy_choice)
-            new_enemy_health = start_enemy_health - damage_output
-            enemy_choice.health = new_enemy_health
-            if enemy_choice.health > 0:
-                if new_enemy_health != start_enemy_health:
-                    print(skill_choice.name + " hit " + enemy_choice.name )
-                    print(enemy_choice.name + " now has " + str(enemy_choice.health) + " health.")
-                    print("")
-                    time.sleep(3)
-                    return list_enemies
+        if skill_choice.type == "mag" or skill_choice.type == "phys":
+            if skill_choice.enemies == 1:
+                for i in range(len(list_enemies)):
+                    print(str(i+1) + ": " + list_enemies[i].name + " has " + str(list_enemies[i].health) + " health")
+                enemy_selection = int(input("Which enemy do you wish to attack? "))
+                clear(1)
+                enemy_choice = list_enemies[enemy_selection - 1]
+                start_enemy_health = enemy_choice.health
+                damage_output = skill_damage(skill_choice, character, enemy_choice)
+                new_enemy_health = start_enemy_health - damage_output
+                enemy_choice.health = new_enemy_health
+                if enemy_choice.health > 0:
+                    if new_enemy_health != start_enemy_health:
+                        print(skill_choice.name + " hit " + enemy_choice.name)
+                        print(enemy_choice.name + " now has " + str(enemy_choice.health) + " health.")
+                        print("")
+                        time.sleep(3)
+                        return list_enemies
+                    else:
+                        print(skill_choice.name + " missed.")
+                        print("")
+                        time.sleep(3)
+                        return list_enemies
                 else:
-                    print(skill_choice.name + " missed.")
+                    print(skill_choice.name + " dealt a killing blow. ")
+                    print(enemy_choice.name + " has perished")
                     print("")
+                    del list_enemies[enemy_selection-1]
                     time.sleep(3)
                     return list_enemies
             else:
-                print(skill_choice.name + " dealt a killing blow. ")
-                print(enemy_choice.name + " has perished")
-                print("")
-                del list_enemies[enemy_selection-1]
-                time.sleep(3)
-                return list_enemies
-        else:
-            for i in range(len(list_enemies)):
-                start_enemy_health = list_enemies[i-(start_list_length - len(list_enemies))].health
-                total_damage_output = skill_damage(skill_choice, character,
-                                                   list_enemies[i-(start_list_length - len(list_enemies))])
-                new_enemy_health = start_enemy_health - total_damage_output
-                if new_enemy_health > 0:
-                    list_enemies[i-(start_list_length - len(list_enemies))].health = new_enemy_health
-                if new_enemy_health <= 0:
-                    list_enemies[i - (start_list_length - len(list_enemies))].health = 0
-                if list_enemies[i-(start_list_length - len(list_enemies))].health > 0:
-                    if new_enemy_health != start_enemy_health:
-                        print(skill_choice.name + " hit " + list_enemies[i-(start_list_length - len(list_enemies))].name + " for "
-                              + str(start_enemy_health - new_enemy_health) + " damage", end=", ")
-                        print(list_enemies[i-(start_list_length - len(list_enemies))].name + " now has " +
-                              str(list_enemies[i-(start_list_length - len(list_enemies))].health) + " health.")
-                        print("")
-                        time.sleep(3)
+                for i in range(len(list_enemies)):
+                    start_enemy_health = list_enemies[i-(start_list_length - len(list_enemies))].health
+                    total_damage_output = skill_damage(skill_choice, character,
+                                                       list_enemies[i-(start_list_length - len(list_enemies))])
+                    new_enemy_health = start_enemy_health - total_damage_output
+                    if new_enemy_health > 0:
+                        list_enemies[i-(start_list_length - len(list_enemies))].health = new_enemy_health
+                    if new_enemy_health <= 0:
+                        list_enemies[i - (start_list_length - len(list_enemies))].health = 0
+                    if list_enemies[i-(start_list_length - len(list_enemies))].health > 0:
+                        if new_enemy_health != start_enemy_health:
+                            print(skill_choice.name + " hit " +
+                                  list_enemies[i-(start_list_length - len(list_enemies))].name + " for " +
+                                  str(start_enemy_health - new_enemy_health) + " damage", end=", ")
+                            print(list_enemies[i-(start_list_length - len(list_enemies))].name + " now has " +
+                                  str(list_enemies[i-(start_list_length - len(list_enemies))].health) + " health.")
+                            print("")
+                            time.sleep(3)
+                        else:
+                            print(skill_choice.name + " missed." +
+                                  list_enemies[i-(start_list_length - len(list_enemies))].name, end=", ")
+                            print("")
+                            time.sleep(3)
                     else:
-                        print(skill_choice.name + " missed." +
-                              list_enemies[i-(start_list_length - len(list_enemies))].name, end=", ")
-                        print("")
+                        print(skill_choice.name + " dealt a killing blow. ")
+                        print(list_enemies[i-(start_list_length - len(list_enemies))].name + " has perished")
+                        del list_enemies[i-(start_list_length - len(list_enemies))]
                         time.sleep(3)
-                else:
-                    print(skill_choice.name + " dealt a killing blow. ")
-                    print(list_enemies[i-(start_list_length - len(list_enemies))].name + " has perished")
-                    del list_enemies[i-(start_list_length - len(list_enemies))]
-                    time.sleep(3)
+        elif skill_choice.type == "buff" or skill_choice. type == "debuff":
+            if skill_choice.type == "buff":
+                if skill_choice.amount == 1:
+                    for i in range(len(list_players)):
+                        print(str(i+1) + " : " + list_players[i].name)
+                    character_choice = int(input("Which character do you wish to buff? "))
+                    if skill_choice.level == 0:
+                        buff_amount = int(random.randint(1, 5) * skill_choice.modifier)
+                    elif skill_choice.level == 1:
+                        buff_amount = int(random.randint(6, 10) * skill_choice.modifier)
+                    elif skill_choice.level == 2:
+                        buff_amount = int(random.randint(11, 15) * skill_choice.modifier)
+                    elif skill_choice.level == 3:
+                        buff_amount = int(random.randint(16, 20) * skill_choice.modifier)
+                    elif skill_choice.level == 9:
+                        buff_amount = random.randint(1, 10) * skill_choice.modifier
+                    if skill_choice.stat == "phys":
+                        list_players[character_choice - 1].temp_phys += buff_amount
+                        print(character_choice.name + " had their physical attack buffed by "
+                              + str(buff_amount) + " points")
+                        time.sleep(2)
+                    elif skill_choice.stat == "mag":
+                        list_players[character_choice - 1].temp_mag += buff_amount
+                        print(character_choice.name + " had their magic attack buffed by "
+                              + str(buff_amount) + " points")
+                        time.sleep(2)
+                    elif skill_choice.stat == "defe":
+                        list_players[character_choice - 1].temp_defe += buff_amount
+                        print(character_choice.name + " had their defense buffed by "
+                              + str(buff_amount) + " points")
+                        time.sleep(2)
+                    elif skill_choice.stat == "luck":
+                        list_players[character_choice - 1].temp_luck += buff_amount
+                        print(character_choice.name + " had their luck buffed by "
+                              + str(buff_amount) + " points")
+                        time.sleep(2)
+                    elif skill_choice.stat == "all":
+                        list_players[character_choice - 1].temp_phys += buff_amount
+                        list_players[character_choice - 1].temp_mag += buff_amount
+                        list_players[character_choice - 1].temp_defe += buff_amount
+                        list_players[character_choice - 1].temp_luck += buff_amount
+                        print(character_choice.name + " had all their stats buffed by "
+                              + str(buff_amount) + " points")
+                        time.sleep(2)
+                elif skill_choice.amount == 4:
+                    if skill_choice.level == 0:
+                        buff_amount = int(random.randint(1, 5) * skill_choice.modifier)
+                    elif skill_choice.level == 1:
+                        buff_amount = int(random.randint(6, 10) * skill_choice.modifier)
+                    elif skill_choice.level == 2:
+                        buff_amount = int(random.randint(11, 15) * skill_choice.modifier)
+                    elif skill_choice.level == 3:
+                        buff_amount = int(random.randint(16, 20) * skill_choice.modifier)
+                    elif skill_choice.level == 9:
+                        buff_amount = random.randint(1, 10) * skill_choice.modifier
+                    for i in range(len(list_players)):
+                        if skill_choice.stat == "phys":
+                            list_players[i].temp_phys += buff_amount
+                            if i == len(list_players) - 1:
+                                print("The parties physical attack was buffed by " + str(buff_amount) + " points")
+                                time.sleep(2)
+                        elif skill_choice.stat == "mag":
+                            list_players[i].temp_mag += buff_amount
+                            if i == len(list_players) - 1:
+                                print("The parties magical attack was buffed by " + str(buff_amount) + " points")
+                                time.sleep(2)
+                        elif skill_choice.stat == "defe":
+                            list_players[i].temp_defe += buff_amount
+                            if i == len(list_players) - 1:
+                                print("The parties defense was buffed by " + str(buff_amount) + " points")
+                                time.sleep(2)
+                        elif skill_choice.stat == "luck":
+                            list_players[i].temp_luck += buff_amount
+                            if i == len(list_players) - 1:
+                                print("The parties luck was buffed by " + str(buff_amount) + " points")
+                                time.sleep(2)
+                        elif skill_choice.stat == "all":
+                            list_players[i].temp_phys += buff_amount
+                            list_players[i].temp_mag += buff_amount
+                            list_players[i].temp_defe += buff_amount
+                            list_players[i].temp_luck += buff_amount
+                            if i == len(list_players) - 1:
+                                print("The parties stats were all buffed by " + str(buff_amount) + " points")
+                                time.sleep(2)
+
     return list_enemies
 
 
 def enemy_turn(enemy, list_characters):
+    clear(1)
     start_list_length = len(list_characters)
     enemy_skill_list = enemy.skill
     skill_choice = random.randint(0, len(enemy_skill_list) - 1)
     skill_choice = enemy_skill_list[skill_choice]
     if skill_choice.enemies == 1:
-        character_choice_position = random.randint(0,3)
+        character_choice_position = random.randint(0, 3)
         character_choice = list_characters[character_choice_position]
         start_character_health = character_choice.health
         new_enemy_health = start_character_health - round(skill_damage(skill_choice, enemy, character_choice))
         character_choice.health = new_enemy_health
         if character_choice.health > 0:
             if new_enemy_health != start_character_health:
-                print(enemy.name + " used " + skill_choice.name +  " and hit " + character_choice.name + " for " +
-                      str(start_character_health - new_enemy_health ))
-                print("Enemy strength: " + str(enemy.phys))
+                print(enemy.name + " used " + skill_choice.name + " and hit " + character_choice.name + " for " +
+                      str(start_character_health - new_enemy_health))
+                print("Enemy strength: " + str(enemy.temp_phys))
                 print(character_choice.name + " now has " + str(character_choice.health) + " health.")
                 time.sleep(3)
                 return list_characters
@@ -312,8 +402,8 @@ def enemy_turn(enemy, list_characters):
     else:
         for i in range(len(list_characters)):
             start_enemy_health = list_characters[i - (start_list_length - len(list_characters))].health
-            new_enemy_health = start_enemy_health - round(skill_damage(skill_choice, enemy,
-                                            list_characters[i - (start_list_length - len(list_characters))]))
+            new_enemy_health = start_enemy_health - round(
+                skill_damage(skill_choice, enemy, list_characters[i - (start_list_length - len(list_characters))]))
             list_characters[i - (start_list_length - len(list_characters))].health = new_enemy_health
             if list_characters[i - (start_list_length - len(list_characters))].health > 0:
                 if new_enemy_health != start_enemy_health:
@@ -326,7 +416,8 @@ def enemy_turn(enemy, list_characters):
                     return list_characters
                 else:
                     print(
-                        skill_choice.name + " missed." + list_characters[i - (start_list_length - len(list_characters))].name,
+                        skill_choice.name + " missed." +
+                        list_characters[i - (start_list_length - len(list_characters))].name,
                         end=", ")
                     time.sleep(3)
                     return list_characters
@@ -340,55 +431,66 @@ def enemy_turn(enemy, list_characters):
     return list_characters
 
 
-def battle_scenario(player_team):
+def battle_scenario():
     clear(1)
     enemy_list = enemies_present(player_main)
     amount_enemies = len(enemy_list)
     turn_count = 1
-    while len(enemy_list) != 0 or (player_main.health and brawler.health and mage.health and tank.health) != 0:
-        turn_choice = random.randint(0,1)
+    battle_team = active_team
+    while len(enemy_list) != 0 or len(battle_team) != 0:
+        turn_choice = random.randint(0, 1)
         if turn_choice == 0:
             if turn_count == 1:
                 print("You are going first! ")
                 time.sleep(3)
-            if len(player_team) > 0 and len(enemy_list) > 0:
-                enemy_list = player_turn(player_team[random.randint(0, len(player_team)-1)], enemy_list)
+            if len(battle_team) > 0 and len(enemy_list) > 0:
+                enemy_list = player_turn(battle_team[random.randint(0, len(battle_team) - 1)], enemy_list, battle_team)
                 if len(enemy_list) == 0:
                     break
-            if len(player_team) > 0 and len(enemy_list) > 0:
-                player_team = enemy_turn(enemy_list[random.randint(0, len(enemy_list)-1)], player_team)
-                if len(player_team) == 0:
+            if len(battle_team) > 0 and len(enemy_list) > 0:
+                battle_team = enemy_turn(enemy_list[random.randint(0, len(enemy_list) - 1)], battle_team)
+                if len(battle_team) == 0:
                     break
             turn_count += 1
         else:
             if turn_count == 1:
                 print("The enemies are going first! ")
                 time.sleep(3)
-            if len(player_team) > 0 and len(enemy_list) > 0:
-                player_team = enemy_turn(enemy_list[random.randint(0, len(enemy_list)-1)], player_team)
-                if len(player_team) == 0:
+            if len(battle_team) > 0 and len(enemy_list) > 0:
+                battle_team = enemy_turn(enemy_list[random.randint(0, len(enemy_list) - 1)], battle_team)
+                if len(battle_team) == 0:
                     break
-            if len(player_team) > 0 and len(enemy_list) > 0:
-                enemy_list = player_turn(player_team[random.randint(0, len(player_team)-1)], enemy_list)
+            if len(battle_team) > 0 and len(enemy_list) > 0:
+                enemy_list = player_turn(battle_team[random.randint(0, len(battle_team) - 1)], enemy_list, battle_team)
                 if len(enemy_list) == 0:
                     break
             turn_count += 1
     gold_gain(amount_enemies)
-    character_gain_exp(player_team, amount_enemies)
+    character_gain_exp(battle_team, amount_enemies)
+    for i in range(len(battle_team)):
+        battle_team[i].temp_phys = battle_team[i].phys
+        battle_team[i].temp_mag = battle_team[i].mag
+        battle_team[i].temp_defe = battle_team[i].defe
+        battle_team[i].temp_luck = battle_team[i].luck
 
 
 def character_gain_exp(character_list, amount_enemies):
     for i in range(len(character_list)):
+        counter = 0
         amount_exp_gained = amount_enemies * (character_list[i].level - random.randint(-1, 1))
         print(character_list[i].name + " has gained " + str(amount_exp_gained) + " exp.")
         time.sleep(3)
         character_list[i].exp += amount_exp_gained
-        if character_list[i].exp >= character_list[i].req_exp:
+        while character_list[i].exp >= character_list[i].req_exp:
+            if counter > 0:
+                print(character_list[i].name + " leveled up again. ")
+                time.sleep(2)
             level_up_assignment(character_list[i])
             character_list[i].level += 1
             character_list[i].req_exp = 2 * character_list[i].req_exp
-            character_list[i].max_health += (10+random.randint(0,10))
+            character_list[i].max_health += (10+random.randint(0, 10))
             character_list[i].health = character_list[i].max_health
+            counter += 1
 
 
 def gold_gain(amount_enemies):
@@ -438,7 +540,7 @@ def accessory_generator(num_generated):
         else:
             stat_two = "null"
             stat_two_value = 0
-        new_accessory = Accessory(stat, random.randint(1,10), stat_two, stat_two_value, "Test input")
+        new_accessory = Accessory(stat, random.randint(1, 10), stat_two, stat_two_value, "Test input")
         item_pack.accessories.append(new_accessory)
 
 
@@ -475,7 +577,8 @@ def level_up_assignment(character):
 # function ask the user how many stat points they would like to put into the particular stat that
 # they input in the function stat_prompt() and returns the value into the function
 def point_prompt(stat, points):
-    return int(input("You have " + str(points) + " points to allocate, how many would you like to put into " + str(stat) + ("? ")))
+    return int(input("You have " + str(points)
+                     + " points to allocate, how many would you like to put into " + str(stat) + "? "))
 
 
 # the function takes the input found within the function point_prompt and checks to make sure
@@ -494,6 +597,7 @@ def stat_prompt(stat, points):
 def character_stat_list(character):
     clear(1)
     print(character.name)
+    print("Level: " + str(character.level) + " : " + str(character.exp) + "/" + str(character.req_exp) + " EXP")
     print("Health = " + str(character.health) + "/" + str(character.max_health))
     print("Strength = " + str(character.phys))
     print("Magic = " + str(character.mag))
@@ -508,26 +612,27 @@ def check_stats():
     while checked_character != SENTINEL:
         clear(1)
         print("Whose stats would you like to check? ")
-        checked_character = int(input("1 for " + player_main.name + ", 2 for " + brawler.name +
-                                      ", 3 for " + mage.name + ", and 4 for " + tank.name + ", -1 to return : "))
+        checked_character = int(input("1 for " + active_team[0].name + ", 2 for " + active_team[1].name +
+                                      ", 3 for " + active_team[2].name + ", and 4 for "
+                                      + active_team[3].name + ", -1 to return : "))
         while checked_character == 1:
-            character_stat_list(player_main)
+            character_stat_list(active_team[0])
             checked_character = input("Type 0 to return to previous screen ")
         while checked_character == 2:
-            character_stat_list(brawler)
+            character_stat_list(active_team[1])
             checked_character = input("Type 0 to return to previous screen ")
         while checked_character == 3:
-            character_stat_list(mage)
+            character_stat_list(active_team[2])
             checked_character = input("Type 0 to return to previous screen ")
         while checked_character == 4:
-            character_stat_list(tank)
+            character_stat_list(active_team[3])
             checked_character = input("Type 0 to return to previous screen ")
 
 
 def weapon_list(list_choice):
     clear(1)
     while True:
-        for i in range (len(list_choice)):
+        for i in range(len(list_choice)):
             print(list_choice[i].name + ": Attack = " + str(list_choice[i].add_dam))
             print("         " + list_choice[i].stat_mod + " : " + str(list_choice[i].stat_mod_num))
         user_selection = int(input("Enter -1 to return: "))
@@ -539,7 +644,8 @@ def accessory_list(list_choice):
     clear(1)
     while True:
         for i in range(len(list_choice)):
-            print(list_choice[i].name + " : " + str(list_choice[i].b_e_o) + " = " + str(list_choice[i].b_e_o_v), end=" ")
+            print(list_choice[i].name + " : " +
+                  str(list_choice[i].b_e_o) + " = " + str(list_choice[i].b_e_o_v), end=" ")
             if list_choice[i].b_e_t == "null":
                 print(" ")
                 print(" ")
@@ -567,6 +673,33 @@ def check_inventory():
             break
 
 
+def party_edit():
+    clear(1)
+    new_party_list = []
+    total_party_edit = list(total_party)
+    for a in range(4):
+        clear(1)
+        for i in range(len(total_party_edit)):
+            print(str(i+1) + ":" + total_party_edit[i].name)
+        character_choice = int(input("Chose a character to add to the party: "))
+        new_character = total_party_edit[character_choice - 1]
+        new_party_list.append(new_character)
+        del total_party_edit[character_choice - 1]
+        if a == 3:
+            clear(1)
+            for i in range(len(new_party_list)):
+                if i != len(new_party_list) - 1:
+                    print(new_party_list[i].name, end=", ")
+                else:
+                    print(new_party_list[i].name)
+            confirm = int(input("If this party is correct enter 1, if you want to re-create enter 2: "))
+            if confirm == 1:
+                for i in range(4):
+                    active_team[i] = new_party_list[i]
+            elif confirm == 2:
+                party_edit()
+
+
 def party_inventory_menu():
     while True:
         clear(1)
@@ -577,7 +710,7 @@ def party_inventory_menu():
         if action_selection == 1:
             check_stats()
         elif action_selection == 2:
-            pass
+            party_edit()
         elif action_selection == 3:
             check_inventory()
         elif action_selection == -1:
@@ -598,21 +731,21 @@ def character_rest(location):
             clear(1)
             print("To sleep in the inn you must pay 10 gold per party member")
             print("You currently have " + str(item_pack.gold) + " gold.")
-            for i in range(len(player_list)):
-                if i < len(player_list) - 1:
-                    print(player_list[i].name + " has " + str(player_list[i].health) +
-                          "/" + str(player_list[i].max_health) + " health", end=", ")
+            for i in range(len(active_team)):
+                if i < len(active_team) - 1:
+                    print(active_team[i].name + " has " + str(active_team[i].health) +
+                          "/" + str(active_team[i].max_health) + " health", end=", ")
                 else:
-                    print(player_list[i].name + " has " + str(player_list[i].health) +
-                          "/" + str(player_list[i].max_health) + " health")
-            print("1: Pay " + str(len(player_list*10)) + " gold. ")
+                    print(active_team[i].name + " has " + str(active_team[i].health) +
+                          "/" + str(active_team[i].max_health) + " health")
+            print("1: Pay " + str(len(active_team*10)) + " gold. ")
             print("2: Leave the inn")
             user_choice = int(input("What do you do? "))
             if user_choice == 1:
                 clear(1)
-                if item_pack.gold - (len(player_list)*10) >= 0:
-                    for i in range(len(player_list)):
-                        player_list[i].health = player_list[i].max_health
+                if item_pack.gold - (len(active_team)*10) >= 0:
+                    for i in range(len(active_team)):
+                        active_team[i].health = active_team[i].max_health
                     print("The party rested and there health was restored. ")
                     time.sleep(2)
                     break
@@ -631,19 +764,19 @@ def character_rest(location):
             if dice_roll > 50:
                 clear(1)
                 print("You successfully slept in the wilderness and the party was healed to full. ")
-                for i in range(len(player_list)):
-                    player_list[i].health = player_list[i].max_health
+                for i in range(len(active_team)):
+                    active_team[i].health = active_team[i].max_health
                 time.sleep(2)
                 break
             else:
                 clear(1)
                 print("You were attacked while sleeping. ")
                 time.sleep(2)
-                battle_scenario(player_list)
+                battle_scenario()
                 break
 
 
-def start_town_menu(team_list):
+def start_town_menu():
     while True:
         clear(1)
         print("You are currently in the town of Dhornisas")
@@ -664,23 +797,30 @@ def start_town_menu(team_list):
         elif user_selection == 4:
             pass
         elif user_selection == 5:
-            battle_scenario(team_list)
+            battle_scenario()
         elif user_selection == 6:
             party_inventory_menu()
         elif user_selection == -1:
             break
+# ______________________________________________________________________________________________________________________
+# ______________________________________________________________________________________________________________________
+# End of town functions
 
 
 class MainCharacter:
 
-    def __init__(player, phys_atk, mag_atk, defe, current_health, max_health,
+    def __init__(player, phys_atk, mag_atk, defe, health,
                  luck, name, level, exp, required_exp, skill, position):
         player.phys = phys_atk
+        player.temp_phys = phys_atk
         player.mag = mag_atk
+        player.temp_mag = mag_atk
         player.defe = defe
-        player.health = current_health
-        player.max_health = max_health
+        player.temp_defe = defe
+        player.health = health
+        player.max_health = health
         player.luck = luck
+        player.temp_luck = luck
         player.name = name
         player.level = level
         player.skill = skill
@@ -692,9 +832,14 @@ class MainCharacter:
 class BasicEnemy:
     def __init__(enemy, phys_atk, mag_atk, defe, health, luck, name, level, skill, position):
         enemy.phys = phys_atk
+        enemy.temp_phys = phys_atk
         enemy.mag = mag_atk
+        enemy.temp_mag = mag_atk
         enemy.defe = defe
+        enemy.temp_defe = defe
         enemy.health = health
+        enemy.max_health = health
+        enemy.temp_luck = luck
         enemy.luck = luck
         enemy.name = name
         enemy.level = level
@@ -709,17 +854,36 @@ class Skill:
         skill.enemies = enemies
         skill.hits = hits
         if skill.level == 0:
-            modifier = 1
+            skill.modifier = 1
         elif skill.level == 1:
-            modifier = 1.5
+            skill.modifier = 1.5
         elif skill.level == 2:
-            modifier = 2
+            skill.modifier = 2
         elif skill.level == 3:
-            modifier = 3
+            skill.modifier = 3
         elif skill.level == 9:
-            modifier = 1000000
-        skill.modifier = modifier
+            skill.modifier = 1000000
         skill.name = name
+
+
+class Buff:
+    def __init__(buff, type, stat, level, amount, name):
+        buff.type = type
+        buff.stat = stat
+        buff.level = level
+        if level == 0:
+            buff.modifier = 1
+        elif level == 1:
+            buff.modifier = 1.5
+        elif level == 2:
+            buff.modifier = 2
+        elif level == 3:
+            buff.modifier = 3
+        elif level == 9:
+            buff.modifier = 1000000
+        buff.amount = amount
+        buff.name = name
+
 
 
 class Item:
@@ -753,15 +917,21 @@ P084 = Skill("phys", 0, 8, 4, "Hassou Tobi")
 P021 = Skill("phys", 0, 2, 1, "Double Strike")
 M011 = Skill("mag", 0, 1, 1, "Fireball")
 M914 = Skill("mag", 9, 1, 4, "Full Clear")
-
+BP01 = Buff("buff", "phys", 0, 1, "Buff Up")
+BA91 = Buff("buff", "all", 9, 1, "Heat Riser")
+BA94 = Buff("buff", "all", 9, 4, "Ultimate Heat Riser")
 
 item_pack = Item(0, [], [])
 
 
-player_main = MainCharacter(5, 5, 5, 20, 20, 5, "Bill", 1, 0, 2, [P011, P111, P021, P084, M914], 1)
-brawler = MainCharacter(8, 3, 5, 25, 25, 1, "Jeff", 1, 0, 2, [P011, P111, P021, P084, M914], 2)
-mage = MainCharacter(3, 8, 3, 20, 20, 6, "Richard", 1, 0, 2, [M011, P084, M914], 3)
-tank = MainCharacter(2, 2, 8, 25, 25, 5, "Bruce", 1, 0, 2, [P011, P111, P021, P084, M914], 4)
+player_main = MainCharacter(5, 5, 5, 20, 5, "Bill", 1, 0, 2, [M914, BA94], 1)
+brawler = MainCharacter(8, 3, 5, 25, 1, "Jeff", 1, 0, 2, [M914, BA94], 2)
+mage = MainCharacter(3, 8, 3, 20, 6, "Richard", 1, 0, 2, [M914, BA94], 3)
+tank = MainCharacter(2, 2, 8, 25, 5, "Bruce", 1, 0, 2, [M914, BA94], 4)
+bard = MainCharacter(1, 10, 4, 30, 10, "Diego", 1, 0, 2, [M914, BA94], 5)
+anti_hero = MainCharacter(5, 5, 5, 20, 5, "Louis", 1, 0, 2, [M914 ], 6)
+the_dog = MainCharacter(10, 1, 5, 20, 9, "Bolt", 1, 0, 2, [M914 ], 7)
+old_man = MainCharacter(1, 15, 1, 15, 8, "Nameless", 1, 0, 2, [M914], 8)
 
 
 enemy_one = BasicEnemy(0, 0, 0, 0, 0, "Enemy One", 0, [P011, P111], 1)
@@ -769,7 +939,9 @@ enemy_two = BasicEnemy(0, 0, 0, 0, 0, "Enemy Two", 0, [P011, P111], 2)
 enemy_three = BasicEnemy(0, 0, 0, 0, 0, "Enemy Three", 0, [P011, P111], 3)
 enemy_four = BasicEnemy(0, 0, 0, 0, 0, "Enemy Four", 0, [P011, P111], 4)
 
-player_list = [player_main, brawler, mage, tank]
 
+active_team = [player_main, brawler, mage, tank]
+total_party = [player_main, brawler, mage, tank, bard, anti_hero, the_dog, old_man]
+master_party = [player_main, brawler, mage, tank, bard, anti_hero, the_dog, old_man]
 
-start_town_menu(player_list)
+start_town_menu()
