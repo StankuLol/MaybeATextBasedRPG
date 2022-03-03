@@ -110,6 +110,7 @@ def basic_attack(dealer, receiver):
 # The function will say which characters turn it is and prompt them with the possible actions they
 # can take which each then router to separate functions based on the user of the input
 def skill_type_check(skill, user):
+    character_stat = "null"
     if skill.type == "phys":
         character_stat = user.temp_phys
     elif skill.type == "mag":
@@ -131,6 +132,7 @@ def character_luck_range(user):
 def skill_damage(skill, dealer, receiver):
     counter = 0
     total_damage_output = 0
+    damage_block = 0
     used_stat = skill_type_check(skill, dealer)
     for i in range(skill.hits):
         hit_check = character_luck_range(dealer)
@@ -284,6 +286,7 @@ def player_turn(character, list_enemies, list_players):
                     for i in range(len(list_players)):
                         print(str(i+1) + " : " + list_players[i].name)
                     character_choice = int(input("Which character do you wish to buff? "))
+                    character_choice = list_players[character_choice - 1]
                     if skill_choice.level == 0:
                         buff_amount = int(random.randint(1, 5) * skill_choice.modifier)
                     elif skill_choice.level == 1:
@@ -295,30 +298,30 @@ def player_turn(character, list_enemies, list_players):
                     elif skill_choice.level == 9:
                         buff_amount = random.randint(1, 10) * skill_choice.modifier
                     if skill_choice.stat == "phys":
-                        list_players[character_choice - 1].temp_phys += buff_amount
+                        character_choice.temp_phys += buff_amount
                         print(character_choice.name + " had their physical attack buffed by "
                               + str(buff_amount) + " points")
                         time.sleep(2)
                     elif skill_choice.stat == "mag":
-                        list_players[character_choice - 1].temp_mag += buff_amount
+                        character_choice.temp_mag += buff_amount
                         print(character_choice.name + " had their magic attack buffed by "
                               + str(buff_amount) + " points")
                         time.sleep(2)
                     elif skill_choice.stat == "defe":
-                        list_players[character_choice - 1].temp_defe += buff_amount
+                        character_choice.temp_defe += buff_amount
                         print(character_choice.name + " had their defense buffed by "
                               + str(buff_amount) + " points")
                         time.sleep(2)
                     elif skill_choice.stat == "luck":
-                        list_players[character_choice - 1].temp_luck += buff_amount
+                        character_choice.temp_luck += buff_amount
                         print(character_choice.name + " had their luck buffed by "
                               + str(buff_amount) + " points")
                         time.sleep(2)
                     elif skill_choice.stat == "all":
-                        list_players[character_choice - 1].temp_phys += buff_amount
-                        list_players[character_choice - 1].temp_mag += buff_amount
-                        list_players[character_choice - 1].temp_defe += buff_amount
-                        list_players[character_choice - 1].temp_luck += buff_amount
+                        character_choice.temp_phys += buff_amount
+                        character_choice.temp_mag += buff_amount
+                        character_choice.temp_defe += buff_amount
+                        character_choice.temp_luck += buff_amount
                         print(character_choice.name + " had all their stats buffed by "
                               + str(buff_amount) + " points")
                         time.sleep(2)
@@ -526,7 +529,8 @@ def random_stat_generator():
 def weapon_generator(num_generated):
     for i in range(num_generated):
         stat = random_stat_generator()
-        new_weapon = Weapons(random.randint(1, 10), stat, random.randint(1, 10), "Test Input")
+        name = weapon_name_list[random.randint(0, 4)]
+        new_weapon = Weapons(random.randint(1, 10), stat, random.randint(1, 10), name, "none")
         item_pack.weapons.append(new_weapon)
 
 
@@ -534,13 +538,14 @@ def accessory_generator(num_generated):
     for i in range(num_generated):
         stat = random_stat_generator()
         coin_flip = random.randint(0, 1)
+        name = accessory_name_list[random.randint(0, 4)]
         if coin_flip == 0:
             stat_two = random_stat_generator()
             stat_two_value = random.randint(0, 10)
         else:
             stat_two = "null"
             stat_two_value = 0
-        new_accessory = Accessory(stat, random.randint(1, 10), stat_two, stat_two_value, "Test input")
+        new_accessory = Accessory(stat, random.randint(1, 10), stat_two, stat_two_value, name, "none")
         item_pack.accessories.append(new_accessory)
 
 
@@ -603,6 +608,15 @@ def character_stat_list(character):
     print("Magic = " + str(character.mag))
     print("Defense = " + str(character.defe))
     print("Luck = " + str(character.luck))
+    if character.weapon == "None":
+        print("Weapon: None")
+    else:
+        print("Weapon: " + character.weapon.name + " : " + str(character.weapon.add_dam) + " damage and +"
+              + character.weapon.stat_mod_num + " " + character.weapon.stat_mod)
+    if character.accessory == "None":
+        print("Accessory: None")
+    else:
+        print("Accessory: " + character.accessory.name)
 
 
 # The function prompts the user to put in a number corresponding to a party member to route to the
@@ -629,30 +643,36 @@ def check_stats():
             checked_character = input("Type 0 to return to previous screen ")
 
 
-def weapon_list(list_choice):
+def weapon_list(list_choice, location):
     clear(1)
-    while True:
+    if location == "view_menu":
+        while True:
+            for i in range(len(list_choice)):
+                if list_choice[i].user != "none":
+                    print("Equipped by " + list_choice[i].user, end=": ")
+                print(str(i + 1) + " : " + list_choice[i].name + ": Attack = " + str(list_choice[i].add_dam) + " and "
+                      + list_choice[i].stat_mod + " : " + str(list_choice[i].stat_mod_num))
+            user_selection = int(input("Enter -1 to return: "))
+            if user_selection == -1:
+                break
+    elif location == "change_menu":
         for i in range(len(list_choice)):
-            print(list_choice[i].name + ": Attack = " + str(list_choice[i].add_dam))
-            print("         " + list_choice[i].stat_mod + " : " + str(list_choice[i].stat_mod_num))
-        user_selection = int(input("Enter -1 to return: "))
-        if user_selection == -1:
-            break
+            if list_choice[i].user == "none":
+                print(str(i+1) + " : " + list_choice[i].name + ": Attack = " + str(list_choice[i].add_dam) + " and "
+                      + list_choice[i].stat_mod + " : " + str(list_choice[i].stat_mod_num))
 
 
 def accessory_list(list_choice):
     clear(1)
     while True:
         for i in range(len(list_choice)):
-            print(list_choice[i].name + " : " +
+            if list_choice[i].user == "none":
+                print(list_choice[i].name + " : " +
                   str(list_choice[i].b_e_o) + " = " + str(list_choice[i].b_e_o_v), end=" ")
-            if list_choice[i].b_e_t == "null":
-                print(" ")
-                print(" ")
-                pass
-            else:
-                print("and " + list_choice[i].b_e_t + " = " + str(list_choice[i].b_e_t_v))
-                print(" ")
+                if list_choice[i].b_e_t == "null":
+                    print(" ")
+                else:
+                    print("and " + list_choice[i].b_e_t + " = " + str(list_choice[i].b_e_t_v))
         user_selection = int(input("Enter -1 to return: "))
         if user_selection == -1:
             break
@@ -666,7 +686,7 @@ def check_inventory():
         print("2: Accessory List ")
         user_selection = int(input("Chose a list to view, -1 to return: "))
         if user_selection == 1:
-            weapon_list(item_pack.weapons)
+            weapon_list(item_pack.weapons, "view_menu")
         elif user_selection == 2:
             accessory_list(item_pack.accessories)
         elif user_selection == -1:
@@ -700,18 +720,45 @@ def party_edit():
                 party_edit()
 
 
+def weapon_change(character):
+    clear(1)
+    weapon_list(item_pack.weapons, "change_menu")
+    weapon_choice = int(input("Which weapon do you wish to equip to " + character.name + "? ")) - 1
+    character.weapon = item_pack.weapons[weapon_choice]
+    item_pack.weapons[weapon_choice].user = character.name
+    clear(1)
+    print(character.name + " equipped " + item_pack.weapons[weapon_choice].name)
+    time.sleep(2)
+
+
+def equipment_change():
+    clear(1)
+    for i in range(len(total_party)):
+        print(str(i+1) + " : " + total_party[i].name)
+    character_choice = total_party[int(input(" Which characters equipment do you wish to change? ")) - 1]
+    clear(1)
+    print("1: Weapon ")
+    print("2: Accessory")
+    menu_choice = int(input("Which do you wish to change? "))
+    if menu_choice == 1:
+        weapon_change(character_choice)
+
+
 def party_inventory_menu():
     while True:
         clear(1)
         print("1: View the current party ")
-        print("2: Edit the party -WIP")
-        print("3: View your current inventory ")
+        print("2: Edit the party ")
+        print("3: Change characters equipments ")
+        print("4: View your current inventory ")
         action_selection = int(input("What would you like to do, -1 to return: "))
         if action_selection == 1:
             check_stats()
         elif action_selection == 2:
             party_edit()
         elif action_selection == 3:
+            equipment_change()
+        elif action_selection == 4:
             check_inventory()
         elif action_selection == -1:
             break
@@ -810,20 +857,47 @@ def start_town_menu():
 class MainCharacter:
 
     def __init__(player, phys_atk, mag_atk, defe, health,
-                 luck, name, level, exp, required_exp, skill, position):
+                 luck, name, level, exp, required_exp, skill, accessory, weapon, position):
+
         player.phys = phys_atk
-        player.temp_phys = phys_atk
+        if weapon == "None":
+            player.temp_phys = phys_atk
+        elif weapon.stat_mod == "phys":
+            player.temp_phys = phys_atk + weapon.stat_mod_num + weapon.add_dam
+        else:
+            player.temp_phys= phys_atk + weapon.add_dam
+
         player.mag = mag_atk
-        player.temp_mag = mag_atk
+        if weapon == "None":
+            player.temp_mag = mag_atk
+        elif weapon.stat_mod == "mag":
+            player.temp_mag = mag_atk + weapon.stat_mod_num
+        else:
+            player.temp_mag = mag_atk
+
         player.defe = defe
-        player.temp_defe = defe
+        if weapon == "None":
+            player.temp_defe = defe
+        elif weapon.stat_mod == "defe":
+            player.temp_defe = defe + weapon.stat_mod_num
+        else:
+            player.temp_defe = defe
+
+        player.luck = luck
+        if weapon == "None":
+            player.temp_luck = luck
+        elif weapon.stat_mod == "luck":
+            player.temp_luck = luck + weapon.stat_mod_num
+        else:
+            player.temp_luck = luck
+
         player.health = health
         player.max_health = health
-        player.luck = luck
-        player.temp_luck = luck
         player.name = name
         player.level = level
         player.skill = skill
+        player.accessory = accessory
+        player.weapon = weapon
         player.position = position
         player.exp = exp
         player.req_exp = required_exp
@@ -885,7 +959,6 @@ class Buff:
         buff.name = name
 
 
-
 class Item:
     def __init__(self, gold, weapon_list, accessory_list):
         self.gold = gold
@@ -895,20 +968,22 @@ class Item:
 
 class Weapons:
 
-    def __init__(self, additional_damage, stat_modifier, stat_modifier_number, name):
+    def __init__(self, additional_damage, stat_modifier, stat_modifier_number, name, user):
         self.add_dam = additional_damage
         self.stat_mod = stat_modifier
         self.stat_mod_num = stat_modifier_number
         self.name = name
+        self.user = user
 
 
 class Accessory:
-    def __init__(self, bonus_effect_one, bonus_effect_one_value, bonus_effect_two, bonus_effect_two_value, name):
+    def __init__(self, bonus_effect_one, bonus_effect_one_value, bonus_effect_two, bonus_effect_two_value, name, user):
         self.b_e_o = bonus_effect_one
         self.b_e_o_v = bonus_effect_one_value
         self.b_e_t = bonus_effect_two
         self.b_e_t_v = bonus_effect_two_value
         self.name = name
+        self.user = user
 
 
 P011 = Skill("phys", 0, 1, 1, "Bash")
@@ -921,17 +996,21 @@ BP01 = Buff("buff", "phys", 0, 1, "Buff Up")
 BA91 = Buff("buff", "all", 9, 1, "Heat Riser")
 BA94 = Buff("buff", "all", 9, 4, "Ultimate Heat Riser")
 
+
 item_pack = Item(0, [], [])
+weapon_name_list = ["Knife ", "Greatsword ", "Katana ", "Godslayer ", "Old Wand "]
+accessory_name_list = ["Boots of the Wolf", "Helmet of the Slayer ",
+                       "Greaves of the Phantom ", "Ghost of the Past", "Mask of the Crow"]
 
 
-player_main = MainCharacter(5, 5, 5, 20, 5, "Bill", 1, 0, 2, [M914, BA94], 1)
-brawler = MainCharacter(8, 3, 5, 25, 1, "Jeff", 1, 0, 2, [M914, BA94], 2)
-mage = MainCharacter(3, 8, 3, 20, 6, "Richard", 1, 0, 2, [M914, BA94], 3)
-tank = MainCharacter(2, 2, 8, 25, 5, "Bruce", 1, 0, 2, [M914, BA94], 4)
-bard = MainCharacter(1, 10, 4, 30, 10, "Diego", 1, 0, 2, [M914, BA94], 5)
-anti_hero = MainCharacter(5, 5, 5, 20, 5, "Louis", 1, 0, 2, [M914 ], 6)
-the_dog = MainCharacter(10, 1, 5, 20, 9, "Bolt", 1, 0, 2, [M914 ], 7)
-old_man = MainCharacter(1, 15, 1, 15, 8, "Nameless", 1, 0, 2, [M914], 8)
+player_main = MainCharacter(5, 5, 5, 20, 5, "Bill", 1, 0, 2, [M914, BA94], "None", "None", 1)
+brawler = MainCharacter(8, 3, 5, 25, 1, "Jeff", 1, 0, 2, [M914, BA94], "None", "None", 2)
+mage = MainCharacter(3, 8, 3, 20, 6, "Richard", 1, 0, 2, [M914, BA94], "None", "None", 3)
+tank = MainCharacter(2, 2, 8, 25, 5, "Bruce", 1, 0, 2, [M914, BA94], "None", "None", 4)
+bard = MainCharacter(1, 10, 4, 30, 10, "Diego", 1, 0, 2, [M914, BA94], "None", "None", 5)
+anti_hero = MainCharacter(5, 5, 5, 20, 5, "Louis", 1, 0, 2, [M914], "None", "None", 6)
+the_dog = MainCharacter(10, 1, 5, 20, 9, "Bolt", 1, 0, 2, [M914], "None", "None", 7)
+old_man = MainCharacter(1, 15, 1, 15, 8, "Nameless", 1, 0, 2, [M914], "None", "None", 8)
 
 
 enemy_one = BasicEnemy(0, 0, 0, 0, 0, "Enemy One", 0, [P011, P111], 1)
@@ -941,7 +1020,9 @@ enemy_four = BasicEnemy(0, 0, 0, 0, 0, "Enemy Four", 0, [P011, P111], 4)
 
 
 active_team = [player_main, brawler, mage, tank]
-total_party = [player_main, brawler, mage, tank, bard, anti_hero, the_dog, old_man]
+total_party = [player_main, brawler, mage, tank, bard, the_dog]
 master_party = [player_main, brawler, mage, tank, bard, anti_hero, the_dog, old_man]
 
+weapon_generator(5)
+accessory_generator(5)
 start_town_menu()
