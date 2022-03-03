@@ -612,7 +612,7 @@ def character_stat_list(character):
         print("Weapon: None")
     else:
         print("Weapon: " + character.weapon.name + " : " + str(character.weapon.add_dam) + " damage and +"
-              + character.weapon.stat_mod_num + " " + character.weapon.stat_mod)
+              + str(character.weapon.stat_mod_num) + " " + character.weapon.stat_mod)
     if character.accessory == "None":
         print("Accessory: None")
     else:
@@ -891,6 +891,14 @@ class MainCharacter:
         else:
             player.temp_luck = luck
 
+        if weapon == "None":
+            pass
+        elif weapon.stat_mod == "all":
+            player.temp_phys = phys_atk + weapon.stat_mod_num + weapon.add_dam
+            player.temp_mag = mag_atk + weapon.stat_mod_num
+            player.temp_defe = defe + weapon.stat_mod_num
+            player.temp_luck = luck + weapon.stat_mod_num
+
         player.health = health
         player.max_health = health
         player.name = name
@@ -1002,8 +1010,10 @@ weapon_name_list = ["Knife ", "Greatsword ", "Katana ", "Godslayer ", "Old Wand 
 accessory_name_list = ["Boots of the Wolf", "Helmet of the Slayer ",
                        "Greaves of the Phantom ", "Ghost of the Past", "Mask of the Crow"]
 
+master_sword = Weapons(99, "all", 99, "The True Sword of the Slayer", "Bill")
 
-player_main = MainCharacter(5, 5, 5, 20, 5, "Bill", 1, 0, 2, [M914, BA94], "None", "None", 1)
+
+player_main = MainCharacter(5, 5, 5, 20, 5, "Bill", 1, 0, 2, [M914, BA94], "None", master_sword, 1)
 brawler = MainCharacter(8, 3, 5, 25, 1, "Jeff", 1, 0, 2, [M914, BA94], "None", "None", 2)
 mage = MainCharacter(3, 8, 3, 20, 6, "Richard", 1, 0, 2, [M914, BA94], "None", "None", 3)
 tank = MainCharacter(2, 2, 8, 25, 5, "Bruce", 1, 0, 2, [M914, BA94], "None", "None", 4)
@@ -1023,6 +1033,6 @@ active_team = [player_main, brawler, mage, tank]
 total_party = [player_main, brawler, mage, tank, bard, the_dog]
 master_party = [player_main, brawler, mage, tank, bard, anti_hero, the_dog, old_man]
 
-weapon_generator(5)
+
 accessory_generator(5)
 start_town_menu()
