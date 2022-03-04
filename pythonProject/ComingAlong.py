@@ -434,10 +434,16 @@ def enemy_turn(enemy, list_characters):
     return list_characters
 
 
-def battle_scenario():
+def battle_scenario(encounter_type):
     clear(1)
-    enemy_list = enemies_present(player_main)
-    amount_enemies = len(enemy_list)
+    enemy_list = []
+    amount_enemies = 0
+    if encounter_type == "normal":
+        enemy_list = enemies_present(player_main)
+        amount_enemies = len(enemy_list)
+    elif encounter_type == "reaper_encounter":
+        enemy_list = [secret_enemy_reaper]
+        amount_enemies = 100
     turn_count = 1
     battle_team = active_team
     while len(enemy_list) != 0 or len(battle_team) != 0:
@@ -654,29 +660,41 @@ def weapon_list(location):
                 print(str(i + 1) + " : " + item_pack.weapons[i].name + ": Attack = " + str(item_pack.weapons[i].add_dam) + " and "
                       + item_pack.weapons[i].stat_mod + " : " + str(item_pack.weapons[i].stat_mod_num))
             user_selection = int(input("Enter -1 to return: "))
-            if user_selection == -1:
+            if user_selection == SENTINEL:
                 break
-    elif location == "change_menu":
+    elif location == "equip_menu":
         for i in range(len(item_pack.weapons)):
             if item_pack.weapons[i].user == "none":
                 print(str(i+1) + " : " + item_pack.weapons[i].name + ": Attack = " + str(item_pack.weapons[i].add_dam) + " and "
                       + item_pack.weapons[i].stat_mod + " : " + str(item_pack.weapons[i].stat_mod_num))
 
 
-def accessory_list(list_choice):
+def accessory_list(location):
     clear(1)
-    while True:
-        for i in range(len(list_choice)):
-            if list_choice[i].user == "none":
-                print(list_choice[i].name + " : " +
-                      str(list_choice[i].b_e_o) + " = " + str(list_choice[i].b_e_o_v), end=" ")
-                if list_choice[i].b_e_t == "null":
-                    print(" ")
-                else:
-                    print("and " + list_choice[i].b_e_t + " = " + str(list_choice[i].b_e_t_v))
-        user_selection = int(input("Enter -1 to return: "))
-        if user_selection == -1:
-            break
+    item_pack.accessories = sorted(item_pack.accessories, key=lambda accessory: accessory.name)
+    if location == "view_menu":
+        while True:
+            for i in range(len(item_pack.accessories)):
+                if item_pack.accessories[i].user == "none":
+                    print(item_pack.accessories[i].name + " : " +
+                          str(item_pack.accessories[i].b_e_o) + " = " + str(item_pack.accessories[i].b_e_o_v), end=" ")
+                    if item_pack.accessories[i].b_e_t == "null":
+                        print(" ")
+                    else:
+                        print("and " + item_pack.accessories[i].b_e_t + " = " + str(item_pack.accessories[i].b_e_t_v))
+            user_selection = int(input("Enter -1 to return: "))
+            if user_selection == SENTINEL:
+                break
+
+    elif location == "equip_menu":
+        for i in range(len(item_pack.accessories)):
+                if item_pack.accessories[i].user == "none":
+                    print(item_pack.accessories[i].name + " : " +
+                          str(item_pack.accessories[i].b_e_o) + " = " + str(item_pack.accessories[i].b_e_o_v), end=" ")
+                    if item_pack.accessories[i].b_e_t == "null":
+                        print(" ")
+                    else:
+                        print("and " + item_pack.accessories[i].b_e_t + " = " + str(item_pack.accessories[i].b_e_t_v))
 
 
 def check_inventory():
@@ -690,7 +708,7 @@ def check_inventory():
             weapon_list("view_menu")
         elif user_selection == 2:
             accessory_list(item_pack.accessories)
-        elif user_selection == -1:
+        elif user_selection == SENTINEL:
             break
 
 
@@ -723,12 +741,23 @@ def party_edit():
 
 def weapon_change(character):
     clear(1)
-    weapon_list("change_menu")
+    weapon_list("equip_menu")
     weapon_choice = int(input("Which weapon do you wish to equip to " + character.name + "? ")) - 1
     character.weapon = item_pack.weapons[weapon_choice]
     item_pack.weapons[weapon_choice].user = character.name
     clear(1)
     print(character.name + " equipped " + item_pack.weapons[weapon_choice].name)
+    time.sleep(2)
+
+
+def accessory_change(character):
+    clear(1)
+    accessory_list("equip_menu")
+    accessory_choice = int(input("Which accessory do you wish to equip to " + character.name + "? ")) - 1
+    character.accessory = item_pack.weapons[accessory_choice]
+    item_pack.accessories[accessory_choice].user = character.name
+    clear(1)
+    print(character.name + " equipped " + item_pack.weapons[accessory_choice].name)
     time.sleep(2)
 
 
@@ -743,6 +772,8 @@ def equipment_change():
     menu_choice = int(input("Which do you wish to change? "))
     if menu_choice == 1:
         weapon_change(character_choice)
+    elif menu_choice == 2:
+        accessory_change(character_choice)
 
 
 def party_inventory_menu():
@@ -761,7 +792,7 @@ def party_inventory_menu():
             equipment_change()
         elif action_selection == 4:
             check_inventory()
-        elif action_selection == -1:
+        elif action_selection == SENTINEL:
             break
 
 # ______________________________________________________________________________________________________________________
@@ -835,6 +866,7 @@ def start_town_menu():
         print("4: Check the local job board -WIP")
         print("5: Go clear the local wilderness of enemies")
         print("6: Manage the party and inventory ")
+        print("7: You won't survive this")
         user_selection = int(input("Choose what you wish to do. "))
         if user_selection == 1:
             pass
@@ -845,10 +877,12 @@ def start_town_menu():
         elif user_selection == 4:
             pass
         elif user_selection == 5:
-            battle_scenario()
+            battle_scenario("normal")
         elif user_selection == 6:
             party_inventory_menu()
-        elif user_selection == -1:
+        elif user_selection == 7:
+            battle_scenario("reaper_encounter")
+        elif user_selection == SENTINEL:
             break
 # ______________________________________________________________________________________________________________________
 # ______________________________________________________________________________________________________________________
@@ -1029,6 +1063,7 @@ enemy_one = BasicEnemy(0, 0, 0, 0, 0, "Enemy One", 0, [P011, P111], 1)
 enemy_two = BasicEnemy(0, 0, 0, 0, 0, "Enemy Two", 0, [P011, P111], 2)
 enemy_three = BasicEnemy(0, 0, 0, 0, 0, "Enemy Three", 0, [P011, P111], 3)
 enemy_four = BasicEnemy(0, 0, 0, 0, 0, "Enemy Four", 0, [P011, P111], 4)
+secret_enemy_reaper = BasicEnemy(99, 99, 99, 9999999999, 99, "The Reaper", 99, [M914], 100)
 
 
 active_team = [player_main, brawler, mage, tank]
