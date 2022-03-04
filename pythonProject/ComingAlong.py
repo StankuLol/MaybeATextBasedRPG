@@ -643,23 +643,24 @@ def check_stats():
             checked_character = input("Type 0 to return to previous screen ")
 
 
-def weapon_list(list_choice, location):
+def weapon_list(location):
     clear(1)
+    item_pack.weapons = sorted(item_pack.weapons, key=lambda weapon: weapon.add_dam, reverse=True)
     if location == "view_menu":
         while True:
-            for i in range(len(list_choice)):
-                if list_choice[i].user != "none":
-                    print("Equipped by " + list_choice[i].user, end=": ")
-                print(str(i + 1) + " : " + list_choice[i].name + ": Attack = " + str(list_choice[i].add_dam) + " and "
-                      + list_choice[i].stat_mod + " : " + str(list_choice[i].stat_mod_num))
+            for i in range(len(item_pack.weapons)):
+                if item_pack.weapons[i].user != "none":
+                    print("Equipped by " + item_pack.weapons[i].user, end=": ")
+                print(str(i + 1) + " : " + item_pack.weapons[i].name + ": Attack = " + str(item_pack.weapons[i].add_dam) + " and "
+                      + item_pack.weapons[i].stat_mod + " : " + str(item_pack.weapons[i].stat_mod_num))
             user_selection = int(input("Enter -1 to return: "))
             if user_selection == -1:
                 break
     elif location == "change_menu":
-        for i in range(len(list_choice)):
-            if list_choice[i].user == "none":
-                print(str(i+1) + " : " + list_choice[i].name + ": Attack = " + str(list_choice[i].add_dam) + " and "
-                      + list_choice[i].stat_mod + " : " + str(list_choice[i].stat_mod_num))
+        for i in range(len(item_pack.weapons)):
+            if item_pack.weapons[i].user == "none":
+                print(str(i+1) + " : " + item_pack.weapons[i].name + ": Attack = " + str(item_pack.weapons[i].add_dam) + " and "
+                      + item_pack.weapons[i].stat_mod + " : " + str(item_pack.weapons[i].stat_mod_num))
 
 
 def accessory_list(list_choice):
@@ -668,7 +669,7 @@ def accessory_list(list_choice):
         for i in range(len(list_choice)):
             if list_choice[i].user == "none":
                 print(list_choice[i].name + " : " +
-                  str(list_choice[i].b_e_o) + " = " + str(list_choice[i].b_e_o_v), end=" ")
+                      str(list_choice[i].b_e_o) + " = " + str(list_choice[i].b_e_o_v), end=" ")
                 if list_choice[i].b_e_t == "null":
                     print(" ")
                 else:
@@ -686,7 +687,7 @@ def check_inventory():
         print("2: Accessory List ")
         user_selection = int(input("Chose a list to view, -1 to return: "))
         if user_selection == 1:
-            weapon_list(item_pack.weapons, "view_menu")
+            weapon_list("view_menu")
         elif user_selection == 2:
             accessory_list(item_pack.accessories)
         elif user_selection == -1:
@@ -722,7 +723,7 @@ def party_edit():
 
 def weapon_change(character):
     clear(1)
-    weapon_list(item_pack.weapons, "change_menu")
+    weapon_list("change_menu")
     weapon_choice = int(input("Which weapon do you wish to equip to " + character.name + "? ")) - 1
     character.weapon = item_pack.weapons[weapon_choice]
     item_pack.weapons[weapon_choice].user = character.name
@@ -1005,15 +1006,16 @@ BA91 = Buff("buff", "all", 9, 1, "Heat Riser")
 BA94 = Buff("buff", "all", 9, 4, "Ultimate Heat Riser")
 
 
-item_pack = Item(0, [], [])
+master_sword = Weapons(99, "all", 99, "The True Sword of the Slayer", "none")
+
+
+item_pack = Item(0, [master_sword], [])
 weapon_name_list = ["Knife ", "Greatsword ", "Katana ", "Godslayer ", "Old Wand "]
 accessory_name_list = ["Boots of the Wolf", "Helmet of the Slayer ",
                        "Greaves of the Phantom ", "Ghost of the Past", "Mask of the Crow"]
 
-master_sword = Weapons(99, "all", 99, "The True Sword of the Slayer", "Bill")
 
-
-player_main = MainCharacter(5, 5, 5, 20, 5, "Bill", 1, 0, 2, [M914, BA94], "None", master_sword, 1)
+player_main = MainCharacter(5, 5, 5, 20, 5, "Bill", 1, 0, 2, [M914, BA94], "None", "None", 1)
 brawler = MainCharacter(8, 3, 5, 25, 1, "Jeff", 1, 0, 2, [M914, BA94], "None", "None", 2)
 mage = MainCharacter(3, 8, 3, 20, 6, "Richard", 1, 0, 2, [M914, BA94], "None", "None", 3)
 tank = MainCharacter(2, 2, 8, 25, 5, "Bruce", 1, 0, 2, [M914, BA94], "None", "None", 4)
@@ -1033,6 +1035,6 @@ active_team = [player_main, brawler, mage, tank]
 total_party = [player_main, brawler, mage, tank, bard, the_dog]
 master_party = [player_main, brawler, mage, tank, bard, anti_hero, the_dog, old_man]
 
-
+weapon_generator(5)
 accessory_generator(5)
 start_town_menu()
