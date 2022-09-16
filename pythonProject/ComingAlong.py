@@ -193,7 +193,13 @@ def player_turn(character, list_enemies, list_players):
         for i in range(len(list_enemies)):
             print(str(i+1) + ": " + list_enemies[i].name + " has " + str(list_enemies[i].health) + " health")
         enemy_selection = int(input("Which enemy do you wish to attack? "))
-        enemy_choice = list_enemies[enemy_selection - 1]
+        enemy_choice = -1
+        while enemy_choice == -1:
+            enemy_selection = int(input("Which enemy do you wish to attack? "))
+            if enemy_selection > len(list_enemies) or enemy_selection < 1:
+                enemy_choice = -1
+            else:
+                enemy_choice = list_enemies[enemy_selection - 1]
         enemy_start_health = enemy_choice.health
         print(character.name + " attacked " + enemy_choice.name)
         new_enemy_health = basic_attack(character, enemy_choice)
@@ -218,7 +224,11 @@ def player_turn(character, list_enemies, list_players):
         clear(1)
         for i in range(len(character.skill)):
             print(str(i + 1) + ": " + character.skill[i].name)
-        skill_choice = int(input("Which skill do you wish to use? "))
+        skill_choice = -1
+        while skill_choice == -1:
+            skill_choice = int(input("Which skill do you wish to use? "))
+            if skill_choice > len(character.skill) or skill_choice < 0:
+                skill_choice = -1
         clear(1)
         skill_choice = character.skill[skill_choice - 1]
         if skill_choice.type == "mag" or skill_choice.type == "phys":
@@ -637,16 +647,16 @@ def check_stats():
                                       + active_team[3].name + ", -1 to return : "))
         while checked_character == 1:
             character_stat_list(active_team[0])
-            checked_character = input("Type 0 to return to previous screen ")
+            checked_character = input("Press enter to return to previous screen ")
         while checked_character == 2:
             character_stat_list(active_team[1])
-            checked_character = input("Type 0 to return to previous screen ")
+            checked_character = input("Press enter to return to previous screen ")
         while checked_character == 3:
             character_stat_list(active_team[2])
-            checked_character = input("Type 0 to return to previous screen ")
+            checked_character = input("Press enter to return to previous screen ")
         while checked_character == 4:
             character_stat_list(active_team[3])
-            checked_character = input("Type 0 to return to previous screen ")
+            checked_character = input("Press enter to return to previous screen ")
 
 
 def weapon_list(location):
@@ -851,7 +861,7 @@ def character_rest(location):
                 clear(1)
                 print("You were attacked while sleeping. ")
                 time.sleep(2)
-                battle_scenario()
+                battle_scenario("normal")
                 break
 
 
